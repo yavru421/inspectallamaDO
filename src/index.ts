@@ -11,6 +11,8 @@ export interface Env {
   ASSETS?: Fetcher;
 }
 
+const FREE_DAILY_LIMIT = 5;
+
 export class InspectaLlamaDO implements DurableObject {
   state: DurableObjectState;
   env: Env;
@@ -20,6 +22,44 @@ export class InspectaLlamaDO implements DurableObject {
     this.state = state;
     this.env = env;
     this.sessions = new Set<WebSocket>();
+  }
+
+  // Returns today's UTC date string used as the storage key (auto-resets daily)
+  private todayKey(): string {
+    return `searches:${new Date().toISOString().slice(0, 10)}`;
+  }
+
+  // Get how many searches this user has done today
+  private async getDailyCount(): Promise<number> {
+    return (await this.state.storage.get<number>(this.todayKey())) ?? 0;
+  }
+
+  // Increment and return the new count
+  private async incrementDailyCount(): Promise<number> {
+    const key = this.todayKey();
+    const current = (await this.state.storage.get<number>(key)) ?? 0;
+    const next = current + 1;
+    await this.state.storage.put(key, next);
+    return next;
+  }
+
+  // Resolve subscription tier from KV cache → D1 fallback
+  private async resolveTier(userId: string): Promise<string> {
+    try {
+      const cached = await this.env.IDENTITY_CACHE.get(`sub:${userId}`);
+      if (cached) return cached;
+      if (this.env.DB) {
+        const row = await this.env.DB.prepare(
+          'SELECT tier FROM user_subscriptions WHERE user_id = ?'
+        ).bind(userId).first();
+        if (row?.tier) {
+          const tier = row.tier as string;
+          await this.env.IDENTITY_CACHE.put(`sub:${userId}`, tier, { expirationTtl: 3600 });
+          return tier;
+        }
+      }
+    } catch (_) {}
+    return 'free';
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -39,26 +79,20 @@ export class InspectaLlamaDO implements DurableObject {
     // 1. HTTP User Status Route
     if (url.pathname === '/api/user/status') {
       const userId = request.headers.get('x-user-id') || 'anonymous';
-      
-      let subTier = 'free';
-      try {
-        const cached = await this.env.IDENTITY_CACHE.get(`sub:${userId}`);
-        if (cached) {
-          subTier = cached;
-        } else if (this.env.DB) {
-          const row = await this.env.DB.prepare('SELECT tier FROM user_subscriptions WHERE user_id = ?').bind(userId).first();
-          if (row?.tier) {
-            subTier = row.tier as string;
-            await this.env.IDENTITY_CACHE.put(`sub:${userId}`, subTier, { expirationTtl: 3600 });
-          }
-        }
-      } catch (e) {
-        // Fallback to free tier on cache miss or table initialization
-      }
+      const tier = await this.resolveTier(userId);
+      const isPro = tier === 'pro';
+      const searchesUsed = await this.getDailyCount();
+      const searchesRemaining = isPro ? null : Math.max(0, FREE_DAILY_LIMIT - searchesUsed);
+      const dailyLimit = isPro ? null : FREE_DAILY_LIMIT;
 
-      return new Response(JSON.stringify({ userId, tier: subTier, isPro: subTier === 'pro' }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(JSON.stringify({
+        userId,
+        tier,
+        isPro,
+        searchesUsed,
+        searchesRemaining,
+        dailyLimit
+      }), { headers: { 'Content-Type': 'application/json' } });
     }
 
     // 2. Stripe Checkout Session Route
@@ -132,10 +166,29 @@ export class InspectaLlamaDO implements DurableObject {
     // 4. Multi-Tab Edge Browser Search Route
     if (url.pathname === '/api/search' && request.method === 'POST') {
       try {
+        const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous';
+        const tier = await this.resolveTier(userId);
+        const isPro = tier === 'pro';
+
+        // Rate limit: free users get 5 searches per day (resets at UTC midnight)
+        if (!isPro) {
+          const used = await this.getDailyCount();
+          if (used >= FREE_DAILY_LIMIT) {
+            return new Response(JSON.stringify({
+              error: 'daily_limit_reached',
+              message: `You've used all ${FREE_DAILY_LIMIT} free searches for today. Upgrade to Pro for unlimited searches.`,
+              searchesUsed: used,
+              dailyLimit: FREE_DAILY_LIMIT,
+              resetsAt: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getTime() + 86400000
+            }), { status: 429, headers: { 'Content-Type': 'application/json' } });
+          }
+          await this.incrementDailyCount();
+        }
+
         const { query, deepCrawl = true } = await request.json() as { query: string; deepCrawl?: boolean };
 
         // Launch Headless Chrome on Cloudflare Edge Node
-        const browser = await puppeteer.launch(this.env.MY_BROWSER, { protocolTimeout: 60000 });
+        const browser = await puppeteer.launch(this.env.MY_BROWSER, { protocolTimeout: 60000 } as any);
         const searchPage = await browser.newPage();
 
         // Perform live search query
