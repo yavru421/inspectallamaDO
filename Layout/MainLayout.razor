@@ -1,15 +1,34 @@
 @inherits LayoutComponentBase
+@inject HttpClient Http
+@inject IJSRuntime JS
 
 <div class="page flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans">
     <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <span class="text-2xl">🦙🔍</span>
             <span class="font-extrabold text-xl tracking-tight text-white">Inspecta<span class="text-indigo-400">Llama</span></span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">Durable Object AI</span>
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">Durable Object AI</span>
         </div>
         <div class="flex items-center gap-4">
             <a href="https://personalization.dondlingergc.com" target="_blank" class="text-xs text-slate-400 hover:text-slate-200 transition">Identity Portal</a>
-            <button class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition">Upgrade Pro ($9.99)</button>
+            
+            @if (isPro)
+            {
+                <span class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5">
+                    <span>👑</span> Inspecta Pro
+                </span>
+            }
+            else
+            {
+                <button @onclick="InitiateStripeCheckout" disabled="@isCheckoutLoading" 
+                        class="text-xs bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                    @if (isCheckoutLoading)
+                    {
+                        <span class="animate-spin">🔄</span>
+                    }
+                    <span>Upgrade Pro ($9.99)</span>
+                </button>
+            }
         </div>
     </header>
 
@@ -21,3 +40,61 @@
         InspectaLlama Engine &copy; 2026 &bull; Cloudflare Edge Durable Objects &amp; Browser Rendering
     </footer>
 </div>
+
+@code {
+    private bool isPro = false;
+    private bool isCheckoutLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<UserStatusResponse>("/api/user/status");
+            if (res != null)
+            {
+                isPro = res.IsPro;
+            }
+        }
+        catch (Exception)
+        {
+            // Fallback for offline dev
+        }
+    }
+
+    private async Task InitiateStripeCheckout()
+    {
+        isCheckoutLoading = true;
+        try
+        {
+            var response = await Http.PostAsync("/api/stripe/checkout", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<StripeCheckoutResponse>();
+                if (!string.IsNullOrEmpty(result?.Url))
+                {
+                    await JS.InvokeVoidAsync("open", result.Url, "_self");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Stripe error: {ex.Message}");
+        }
+        finally
+        {
+            isCheckoutLoading = false;
+        }
+    }
+
+    public class UserStatusResponse
+    {
+        public string UserId { get; set; } = "";
+        public string Tier { get; set; } = "";
+        public bool IsPro { get; set; }
+    }
+
+    public class StripeCheckoutResponse
+    {
+        public string Url { get; set; } = "";
+    }
+}

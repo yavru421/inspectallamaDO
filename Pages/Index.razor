@@ -1,7 +1,19 @@
 @page "/"
 @inject HttpClient Http
+@inject NavigationManager NavManager
 
 <PageTitle>InspectaLlama &bull; Next-Gen AI Search</PageTitle>
+
+@if (showPaymentAlert)
+{
+    <div class="mb-6 p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">🎉</span>
+            <span class="font-bold">Welcome to Inspecta Pro! Your account has been upgraded with unlimited deep search capabilities.</span>
+        </div>
+        <button @onclick="() => showPaymentAlert = false" class="text-emerald-400 hover:text-white font-bold">&times;</button>
+    </div>
+}
 
 <div class="py-8 flex flex-col items-center text-center">
     <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
@@ -11,25 +23,40 @@
         Inspect the Web with <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">AI Precision</span>
     </h1>
     <p class="text-slate-400 max-w-xl text-sm mb-8">
-        Real-time edge browser synthesis. Headless Chrome scraping, visual page inspection, and zero-ad AI search answers.
+        Real-time edge browser synthesis. Multi-tab Puppeteer scraping, visual page inspection, and zero-ad AI answers.
     </p>
 
     <!-- Search Input Form -->
-    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl flex items-center gap-2">
-        <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Ask anything or inspect a topic..." 
-               class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base" />
-        <button @onclick="PerformSearch" disabled="@isLoading" 
-                class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
-            @if (isLoading)
-            {
-                <span class="animate-spin text-sm">🔄</span>
-                <span>Searching...</span>
-            }
-            else
-            {
-                <span>Inspect 🦙</span>
-            }
-        </button>
+    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+            <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Ask anything or inspect a topic..." 
+                   class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base" />
+            <button @onclick="PerformSearch" disabled="@isLoading" 
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+                @if (isLoading)
+                {
+                    <span class="animate-spin text-sm">🔄</span>
+                    <span>Inspecting...</span>
+                }
+                else
+                {
+                    <span>Inspect 🦙</span>
+                }
+            </button>
+        </div>
+        
+        <!-- Search Options Bar -->
+        <div class="flex items-center justify-between px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
+            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
+                <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
+                <span>Multi-Tab Deep Page Scraping</span>
+            </label>
+            <div class="flex items-center gap-2">
+                <span class="text-slate-600">Presets:</span>
+                <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM features")' class="hover:text-indigo-400 transition">.NET 10</button> &bull;
+                <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket limits")' class="hover:text-indigo-400 transition">Durable Objects</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -86,8 +113,25 @@
 
 @code {
     private string searchQuery = "";
+    private bool deepCrawl = true;
     private bool isLoading = false;
+    private bool showPaymentAlert = false;
     private SearchResultResponse? result = null;
+
+    protected override void OnInitialized()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        if (uri.Query.Contains("payment=success"))
+        {
+            showPaymentAlert = true;
+        }
+    }
+
+    private async Task RunPreset(string query)
+    {
+        searchQuery = query;
+        await PerformSearch();
+    }
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
@@ -106,7 +150,7 @@
 
         try
         {
-            var request = new { query = searchQuery, maxPages = 3 };
+            var request = new { query = searchQuery, deepCrawl = deepCrawl };
             var response = await Http.PostAsJsonAsync("/api/search", request);
             if (response.IsSuccessStatusCode)
             {
