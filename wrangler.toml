@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2026-07-28"
 compatibility_flags = ["nodejs_compat"]
 
+[[routes]]
+pattern = "inspectallamado.dondlingergc.com"
+zone_name = "dondlingergc.com"
+custom_domain = true
+
 [assets]
 binding = "ASSETS"
 directory = "dist/wwwroot"
