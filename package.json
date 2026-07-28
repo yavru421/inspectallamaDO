@@ -1,0 +1,18 @@
+{
+  "name": "inspectallama-do",
+  "version": "1.0.0",
+  "description": "InspectaLlama - Next-Gen AI Web Search Engine powered by Cloudflare Durable Objects and Browser Rendering",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "git push origin main"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^0.0.13"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240725.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^3.67.0"
+  }
+}

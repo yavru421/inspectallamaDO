@@ -1,0 +1,141 @@
+@page "/"
+@inject HttpClient Http
+
+<PageTitle>InspectaLlama &bull; Next-Gen AI Search</PageTitle>
+
+<div class="py-8 flex flex-col items-center text-center">
+    <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+        <span>⚡ Powered by Cloudflare Browser Rendering &amp; Llama 3.3 70B</span>
+    </div>
+    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-3">
+        Inspect the Web with <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">AI Precision</span>
+    </h1>
+    <p class="text-slate-400 max-w-xl text-sm mb-8">
+        Real-time edge browser synthesis. Headless Chrome scraping, visual page inspection, and zero-ad AI search answers.
+    </p>
+
+    <!-- Search Input Form -->
+    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl flex items-center gap-2">
+        <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Ask anything or inspect a topic..." 
+               class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base" />
+        <button @onclick="PerformSearch" disabled="@isLoading" 
+                class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+            @if (isLoading)
+            {
+                <span class="animate-spin text-sm">🔄</span>
+                <span>Searching...</span>
+            }
+            else
+            {
+                <span>Inspect 🦙</span>
+            }
+        </button>
+    </div>
+</div>
+
+<!-- Search Results Display -->
+@if (result != null)
+{
+    <div class="mt-8 space-y-6">
+        <!-- AI Synthesis Card -->
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <h2 class="font-bold text-indigo-400 text-lg flex items-center gap-2">
+                    <span>✨ InspectaLlama Edge Synthesis</span>
+                </h2>
+                <span class="text-xs text-slate-500 font-mono">@result.Timestamp</span>
+            </div>
+            <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
+                @result.Synthesis
+            </div>
+        </div>
+
+        <!-- Screenshot Preview & Sources -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Sources Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
+                    <span>🌐 Inspected Web Sources</span>
+                </h3>
+                <div class="space-y-3">
+                    @foreach (var src in result.Sources)
+                    {
+                        <a href="@src.Url" target="_blank" class="block p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800/60 border border-slate-800 transition">
+                            <div class="font-semibold text-indigo-300 text-sm truncate">@src.Title</div>
+                            <div class="text-xs text-slate-400 line-clamp-2 mt-1">@src.Snippet</div>
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Visual Browser Screenshot Card -->
+            @if (!string.IsNullOrEmpty(result.ScreenshotBase64))
+            {
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+                    <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
+                        <span>📸 Edge Browser Screenshot Capture</span>
+                    </h3>
+                    <div class="flex-1 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                        <img src="data:image/jpeg;base64,@result.ScreenshotBase64" alt="Web Inspection Preview" class="w-full h-auto object-cover" />
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string searchQuery = "";
+    private bool isLoading = false;
+    private SearchResultResponse? result = null;
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !isLoading)
+        {
+            await PerformSearch();
+        }
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery)) return;
+
+        isLoading = true;
+        result = null;
+
+        try
+        {
+            var request = new { query = searchQuery, maxPages = 3 };
+            var response = await Http.PostAsJsonAsync("/api/search", request);
+            if (response.IsSuccessStatusCode)
+            {
+                result = await response.Content.ReadFromJsonAsync<SearchResultResponse>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Search error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class SearchResultResponse
+    {
+        public string Query { get; set; } = "";
+        public string Synthesis { get; set; } = "";
+        public List<SourceItem> Sources { get; set; } = new();
+        public string ScreenshotBase64 { get; set; } = "";
+        public string Timestamp { get; set; } = "";
+    }
+
+    public class SourceItem
+    {
+        public string Title { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Snippet { get; set; } = "";
+    }
+}

@@ -1,0 +1,9 @@
+/* Custom styling additions for InspectaLlama */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.glow-effect {
+  animation: pulseGlow 3s infinite ease-in-out;
+}

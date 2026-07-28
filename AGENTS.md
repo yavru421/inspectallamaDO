@@ -1,0 +1,67 @@
+<RULE[AGENTS.md]>
+**The ZLA Toolbox (Opt-In Architecture):**
+- **Default Behavior:** ALWAYS default to standard, pragmatic engineering stacks. If a project requires a backend, a local database, or server-side APIs, build it without hesitation. 
+- **ZLA Definition:** Zero-Liability Architecture (ZLA) strictly denotes a 100% client-side, backend-free, static web application.
+- **When to Apply ZLA:** ONLY enforce ZLA constraints if the user EXPLICITLY requests it for the current project (e.g., "Let's build this as a ZLA app"). 
+- **Marketing Context:** When ZLA *is* deployed, retain the name to establish authority (e.g., "Because it's ZLA, your server bill is $0 and you can't be hacked").
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Cloudflare Deployment Workflow:**
+For ALL Cloudflare projects (Workers, Pages, or hybrid), NEVER run `wrangler deploy` or `npx wrangler deploy` directly to deploy frontend or full-stack apps.
+The ONLY correct deployment workflow is:
+1. `git add`
+2. `git commit`
+3. `git push origin main` (or the appropriate branch)
+
+Cloudflare CI automatically builds and deploys on every push. Direct wrangler deploys bypass CI, skip the build pipeline, and cause version mismatches between what GitHub has and what is live.
+
+*Exception*: If the project directory lacks a configured git remote repository (e.g., `git remote -v` returns no origin), the agent is permitted to execute `npx wrangler deploy` locally to update the service.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**`agy-mcp-server` Sidecar Execution Guidance:**
+For complex multi-line scripts, DuckDB operations, and commands requiring structured argument arrays, PREFER using `agy-mcp-server` (`exec_cmd`) or dedicated script files (`.py`/`.ps1`) to prevent string-escaping bugs.
+- Simple single-binary invocations (e.g., `git status`, `python script.py`, `conda list`) MAY use native `run_command` directly.
+- Raw inline multi-statement PowerShell strings via `run_command` remain DISCOURAGED due to escaping fragility.
+- When in doubt, use `agy-mcp-server` or write a dedicated script file.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Pre-Flight Command Verification & DuckDB Cross-Referencing Invariant:**
+Before invoking `run_command` to execute complex Python scripts or terminal operations, the agent MUST:
+1. Verify exact database schemas and column names via direct introspection or `db_session.py` before executing queries.
+2. Cross-reference `agent_memory.transcripts` to reuse verified working command templates and parameter patterns.
+3. Eliminate string-escaping trial-and-error by passing parameters via structured lists or validated script files rather than raw inline command strings.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Command Failure Resolution (No Bandaids):**
+If you, an Antigravity agent, run a command (e.g. via `run_command` or background tasks) and it FAILS, you MUST:
+1. Immediately log the failure.
+2. DO NOT move on or continue with subsequent steps.
+3. Completely resolve the underlying failure to guarantee CORRECTNESS (do NOT use bandaid fixes or workarounds).
+4. Verify the command succeeds before proceeding with the rest of your task.
+This is non-negotiable and must be handled with utmost priority to prevent cascading errors and silent failures.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Friction Elimination & Auto-Correction Invariant:**
+- **Definition**: FRICTION occurs whenever the agent misinterprets operator intent, loops on broken patterns, or requires repeated corrections.
+- **Mandatory Action**: FRICTION is strictly treated as a hard system configuration bug. The agent MUST:
+  1. Immediately suspend current assumptions.
+  2. Query DuckDB for historical context and past solutions via `db_session.py`.
+  3. Execute sequential thinking (`sequentialthinking` MCP tool) to analyze the root cause step-by-step.
+  4. Propose or apply permanent rule/skill updates (`/learn`) so the failure mode can NEVER recur.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**NTFS Single-Source-of-Truth Hard-Link Invariant:**
+Whenever initializing, updating, or maintaining system-wide configuration files (`AGENTS.md`, `.agentsignore`, `db_session.py`), the agent MUST enforce single-source-of-truth storage at `C:\Users\John\.gemini\config\` and maintain NTFS hard links (`os.link`) to all workspace target directories. Never create isolated copy duplicates of system configuration files.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Pure Engineering & Curiosity-Driven R&D Invariant:**
+When brainstorming, exploring system architectures, or proposing R&D vectors, NEVER frame ideas around monetary metrics ($$ savings, ROI, enterprise cost reduction, or commercial SaaS replacement) unless explicitly requested by the user. 
+Focus EXCLUSIVELY on raw technical curiosity, computational elegance, hardware acceleration, novel system paradigms, and tangible daily friction elimination.
+</RULE[AGENTS.md]>
