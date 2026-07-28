@@ -1,4 +1,4 @@
-name = "inspectallama-do"
+name = "inspectallamado"
 main = "src/index.ts"
 compatibility_date = "2026-07-28"
 compatibility_flags = ["nodejs_compat"]
@@ -28,4 +28,4 @@ class_name = "InspectaLlamaDO"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["InspectaLlamaDO"]
+new_sqlite_classes = ["InspectaLlamaDO"]

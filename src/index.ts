@@ -8,6 +8,7 @@ export interface Env {
   INSPECTA_LLAMA_DO: DurableObjectNamespace;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  ASSETS?: Fetcher;
 }
 
 export class InspectaLlamaDO implements DurableObject {
@@ -233,9 +234,10 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Route search & WebSocket requests to the singleton Durable Object instance
+    // Route search & WebSocket requests to per-user stateful Durable Object instances
     if (url.pathname.startsWith('/api/') || request.headers.get('Upgrade') === 'websocket') {
-      const id = env.INSPECTA_LLAMA_DO.idFromName('global_search_instance');
+      const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous_user';
+      const id = env.INSPECTA_LLAMA_DO.idFromName(`user_actor:${userId}`);
       const obj = env.INSPECTA_LLAMA_DO.get(id);
       return obj.fetch(request);
     }
