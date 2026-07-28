@@ -4,6 +4,7 @@
 
 <PageTitle>InspectaLlama &bull; Next-Gen AI Search</PageTitle>
 
+@* ── Pro upgrade success banner ── *@
 @if (showPaymentAlert)
 {
     <div class="mb-6 p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm flex items-center justify-between">
@@ -12,6 +13,23 @@
             <span class="font-bold">Welcome to Inspecta Pro! Your account has been upgraded with unlimited deep search capabilities.</span>
         </div>
         <button @onclick="() => showPaymentAlert = false" class="text-emerald-400 hover:text-white font-bold">&times;</button>
+    </div>
+}
+
+@* ── Rate limit reached banner ── *@
+@if (rateLimitHit)
+{
+    <div class="mb-6 p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">⏳</span>
+            <div>
+                <span class="font-bold">You've used all 5 free searches for today.</span>
+                <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc</span>
+            </div>
+        </div>
+        <button @onclick="GoProCheckout" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">
+            Upgrade to Pro →
+        </button>
     </div>
 }
 
@@ -26,13 +44,15 @@
         Real-time edge browser synthesis. Multi-tab Puppeteer scraping, visual page inspection, and zero-ad AI answers.
     </p>
 
-    <!-- Search Input Form -->
+    @* ── Search Input Form ── *@
     <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl flex flex-col gap-2">
         <div class="flex items-center gap-2">
-            <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Ask anything or inspect a topic..." 
-                   class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base" />
-            <button @onclick="PerformSearch" disabled="@isLoading" 
-                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+            <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
+                   placeholder="Ask anything or inspect a topic..."
+                   disabled="@(isLoading || rateLimitHit)"
+                   class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed" />
+            <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
                 @if (isLoading)
                 {
                     <span class="animate-spin text-sm">🔄</span>
@@ -44,27 +64,64 @@
                 }
             </button>
         </div>
-        
-        <!-- Search Options Bar -->
+
+        @* ── Bottom options bar ── *@
         <div class="flex items-center justify-between px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
                 <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
                 <span>Multi-Tab Deep Page Scraping</span>
             </label>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
+                @* ── Usage pill ── *@
+                @if (userStatus != null)
+                {
+                    @if (userStatus.IsPro)
+                    {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold">
+                            ✦ Pro
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono">
+                            🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left today
+                        </span>
+                    }
+                }
                 <span class="text-slate-600">Presets:</span>
                 <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM features")' class="hover:text-indigo-400 transition">.NET 10</button> &bull;
                 <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket limits")' class="hover:text-indigo-400 transition">Durable Objects</button>
             </div>
         </div>
     </div>
+
+    @* ── Pro upsell (only when close to or at limit) ── *@
+    @if (userStatus != null && !userStatus.IsPro && (userStatus.SearchesRemaining <= 1 || rateLimitHit))
+    {
+        <div class="mt-4 w-full max-w-2xl p-3 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-xs text-slate-400 flex items-center justify-between">
+            <span>
+                @if (rateLimitHit)
+                {
+                    <span class="text-amber-400 font-semibold">Daily limit reached.</span>
+                }
+                else
+                {
+                    <span class="text-indigo-400 font-semibold">@userStatus.SearchesRemaining search left today.</span>
+                }
+                @(" ")Upgrade to <strong class="text-indigo-300">Pro</strong> for unlimited searches, priority Browser Rendering, and the full 70B model.
+            </span>
+            <button @onclick="GoProCheckout" class="ml-4 shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-1.5 rounded-lg transition">
+                Go Pro →
+            </button>
+        </div>
+    }
 </div>
 
-<!-- Search Results Display -->
+@* ── Search Results ── *@
 @if (result != null)
 {
     <div class="mt-8 space-y-6">
-        <!-- AI Synthesis Card -->
+        @* AI Synthesis Card *@
         <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                 <h2 class="font-bold text-indigo-400 text-lg flex items-center gap-2">
@@ -77,9 +134,8 @@
             </div>
         </div>
 
-        <!-- Screenshot Preview & Sources -->
+        @* Screenshot & Sources *@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Sources Card -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
                     <span>🌐 Inspected Web Sources</span>
@@ -95,7 +151,6 @@
                 </div>
             </div>
 
-            <!-- Visual Browser Screenshot Card -->
             @if (!string.IsNullOrEmpty(result.ScreenshotBase64))
             {
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
@@ -116,15 +171,50 @@
     private bool deepCrawl = true;
     private bool isLoading = false;
     private bool showPaymentAlert = false;
+    private bool rateLimitHit = false;
     private SearchResultResponse? result = null;
+    private UserStatus? userStatus = null;
 
-    protected override void OnInitialized()
+    // Color of the usage pill: green → yellow → red as searches drain
+    private string UsagePillClass => userStatus?.SearchesRemaining switch
+    {
+        0     => "bg-red-500/20 border border-red-500/40 text-red-300",
+        1     => "bg-amber-500/20 border border-amber-500/40 text-amber-300",
+        2     => "bg-amber-500/15 border border-amber-500/30 text-amber-400",
+        _     => "bg-slate-800 border border-slate-700 text-slate-400"
+    };
+
+    // "Xh Ym" until midnight UTC
+    private string TimeUntilMidnightUtc
+    {
+        get
+        {
+            var now = DateTime.UtcNow;
+            var midnight = now.Date.AddDays(1);
+            var diff = midnight - now;
+            return diff.Hours > 0
+                ? $"{diff.Hours}h {diff.Minutes}m"
+                : $"{diff.Minutes}m";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
     {
         var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
         if (uri.Query.Contains("payment=success"))
-        {
             showPaymentAlert = true;
+
+        await RefreshUserStatus();
+    }
+
+    private async Task RefreshUserStatus()
+    {
+        try
+        {
+            userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status");
+            rateLimitHit = userStatus is { IsPro: false, SearchesRemaining: 0 };
         }
+        catch { /* silently ignore — UI just won't show the pill */ }
     }
 
     private async Task RunPreset(string query)
@@ -135,26 +225,33 @@
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !isLoading)
-        {
+        if (e.Key == "Enter" && !isLoading && !rateLimitHit)
             await PerformSearch();
-        }
     }
 
     private async Task PerformSearch()
     {
-        if (string.IsNullOrWhiteSpace(searchQuery)) return;
+        if (string.IsNullOrWhiteSpace(searchQuery) || rateLimitHit) return;
 
         isLoading = true;
         result = null;
 
         try
         {
-            var request = new { query = searchQuery, deepCrawl = deepCrawl };
-            var response = await Http.PostAsJsonAsync("/api/search", request);
+            var req = new { query = searchQuery, deepCrawl };
+            var response = await Http.PostAsJsonAsync("/api/search", req);
+
             if (response.IsSuccessStatusCode)
             {
                 result = await response.Content.ReadFromJsonAsync<SearchResultResponse>();
+                // Refresh usage counter after a successful search
+                await RefreshUserStatus();
+            }
+            else if ((int)response.StatusCode == 429)
+            {
+                // Rate limit hit — flip state so the banner appears
+                rateLimitHit = true;
+                await RefreshUserStatus();
             }
         }
         catch (Exception ex)
@@ -165,6 +262,35 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task GoProCheckout()
+    {
+        try
+        {
+            var response = await Http.PostAsync("/api/stripe/checkout", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadFromJsonAsync<CheckoutUrlResponse>();
+                if (!string.IsNullOrEmpty(body?.Url))
+                    NavManager.NavigateTo(body.Url, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Checkout error: {ex.Message}");
+        }
+    }
+
+    // ── Models ─────────────────────────────────────────────────────────────
+    public class UserStatus
+    {
+        public string UserId { get; set; } = "";
+        public string Tier { get; set; } = "free";
+        public bool IsPro { get; set; }
+        public int SearchesUsed { get; set; }
+        public int? SearchesRemaining { get; set; }
+        public int? DailyLimit { get; set; }
     }
 
     public class SearchResultResponse
@@ -181,5 +307,10 @@
         public string Title { get; set; } = "";
         public string Url { get; set; } = "";
         public string Snippet { get; set; } = "";
+    }
+
+    public class CheckoutUrlResponse
+    {
+        public string Url { get; set; } = "";
     }
 }
