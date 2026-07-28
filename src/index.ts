@@ -135,7 +135,7 @@ export class InspectaLlamaDO implements DurableObject {
         const { query, deepCrawl = true } = await request.json() as { query: string; deepCrawl?: boolean };
 
         // Launch Headless Chrome on Cloudflare Edge Node
-        const browser = await puppeteer.launch(this.env.MY_BROWSER);
+        const browser = await puppeteer.launch(this.env.MY_BROWSER, { protocolTimeout: 60000 });
         const searchPage = await browser.newPage();
 
         // Perform live search query

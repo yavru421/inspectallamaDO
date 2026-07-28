@@ -4,7 +4,7 @@
   "description": "InspectaLlama - Next-Gen AI Web Search Engine powered by Cloudflare Durable Objects and Browser Rendering",
   "main": "src/index.ts",
   "scripts": {
-    "build": "dotnet publish InspectaLlamaDO.csproj -c Release -o wwwroot",
+    "build": "dotnet publish InspectaLlamaDO.csproj -c Release -o dist",
     "dev": "wrangler dev",
     "deploy": "git push origin main"
   },
