@@ -24,46 +24,49 @@ export class InspectaLlamaDO implements DurableObject {
     this.sessions = new Set<WebSocket>();
   }
 
-  // Returns today's UTC date string used as the storage key (auto-resets daily)
-  private todayKey(): string {
-    return `searches:${new Date().toISOString().slice(0, 10)}`;
-  }
-
-  // Get how many searches this user has done today
-  private async getDailyCount(): Promise<number> {
-    return (await this.state.storage.get<number>(this.todayKey())) ?? 0;
-  }
-
-  // Increment and return the new count
-  private async incrementDailyCount(): Promise<number> {
-    const key = this.todayKey();
-    const current = (await this.state.storage.get<number>(key)) ?? 0;
-    const next = current + 1;
-    await this.state.storage.put(key, next);
-    return next;
-  }
-
-  // Resolve subscription tier from KV cache → D1 fallback
-  private async resolveTier(userId: string): Promise<string> {
+  private async deductCredits(userId: string, costCents: number): Promise<boolean> {
     const lowerUser = (userId || '').toLowerCase();
-    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'johndondlinger21@gmail.com' || lowerUser === 'anonymous_user') {
-      return 'pro';
+    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'anonymous_user') {
+      return true; // unlimited
+    }
+    if (!this.env.DB) return false;
+    try {
+      const res = await this.env.DB.prepare(
+        'UPDATE users SET credit_balance_cents = credit_balance_cents - ? WHERE id = ? AND credit_balance_cents >= ? RETURNING credit_balance_cents'
+      ).bind(costCents, userId, costCents).first();
+      
+      if (res && typeof res.credit_balance_cents === 'number') {
+        const newBalance = res.credit_balance_cents;
+        await this.env.DB.prepare(
+          'INSERT INTO credit_ledger (user_id, amount_cents, balance_after_cents, transaction_type, reference_id) VALUES (?, ?, ?, ?, ?)'
+        ).bind(userId, -costCents, newBalance, 'usage', `inspectallama_${Date.now()}`).run();
+        return true;
+      }
+    } catch (e) {
+      console.log('Error deducting credits', e);
+    }
+    return false;
+  }
+
+  // Resolve subscription tier and balance from D1
+  private async resolveTierAndBalance(userId: string): Promise<{tier: string, balance: number}> {
+    const lowerUser = (userId || '').toLowerCase();
+    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'anonymous_user') {
+      return { tier: 'pro', balance: 999999 };
     }
     try {
-      const cached = await this.env.IDENTITY_CACHE.get(`sub:${userId}`);
-      if (cached) return cached;
       if (this.env.DB) {
         const row = await this.env.DB.prepare(
-          'SELECT tier FROM user_subscriptions WHERE user_id = ?'
+          'SELECT subscription_tier, credit_balance_cents FROM users WHERE id = ?'
         ).bind(userId).first();
-        if (row?.tier) {
-          const tier = row.tier as string;
-          await this.env.IDENTITY_CACHE.put(`sub:${userId}`, tier, { expirationTtl: 3600 });
-          return tier;
+        if (row) {
+          return { tier: row.subscription_tier as string, balance: row.credit_balance_cents as number };
         }
       }
-    } catch (_) {}
-    return 'free';
+    } catch (e) {
+      console.log('Error resolving tier', e);
+    }
+    return { tier: 'free', balance: 0 };
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -83,112 +86,44 @@ export class InspectaLlamaDO implements DurableObject {
     // 1. HTTP User Status Route
     if (url.pathname === '/api/user/status') {
       const userId = request.headers.get('x-user-id') || 'anonymous';
-      const tier = await this.resolveTier(userId);
-      const isPro = tier === 'pro';
-      const searchesUsed = await this.getDailyCount();
-      const searchesRemaining = isPro ? null : Math.max(0, FREE_DAILY_LIMIT - searchesUsed);
-      const dailyLimit = isPro ? null : FREE_DAILY_LIMIT;
+      const userInfo = await this.resolveTierAndBalance(userId);
+      const isPro = userInfo.tier === 'pro' || userInfo.tier === 'enterprise';
 
       return new Response(JSON.stringify({
         userId,
-        tier,
+        tier: userInfo.tier,
         isPro,
-        searchesUsed,
-        searchesRemaining,
-        dailyLimit
+        searchesUsed: 0,
+        searchesRemaining: isPro ? null : Math.floor(userInfo.balance / 5),
+        dailyLimit: null
       }), { headers: { 'Content-Type': 'application/json' } });
     }
 
-    // 2. Stripe Checkout Session Route
-    if (url.pathname === '/api/stripe/checkout' && request.method === 'POST') {
-      const userId = request.headers.get('x-user-id') || 'anonymous';
-      const stripeKey = this.env.STRIPE_SECRET_KEY;
 
-      if (!stripeKey) {
-        return new Response(JSON.stringify({
-          error: 'Stripe secret key not configured. Set STRIPE_SECRET_KEY secret in Cloudflare Dashboard.'
-        }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-      }
-
-      try {
-        const params = new URLSearchParams();
-        params.append('payment_method_types[]', 'card');
-        params.append('mode', 'subscription');
-        params.append('line_items[0][price_data][currency]', 'usd');
-        params.append('line_items[0][price_data][product_data][name]', 'InspectaLlama Pro Pass');
-        params.append('line_items[0][price_data][product_data][description]', 'Unlimited Deep Web Search, Live Screenshots, and 70B Llama AI Model Access.');
-        params.append('line_items[0][price_data][unit_amount]', '999'); // $9.99
-        params.append('line_items[0][price_data][recurring][interval]', 'month');
-        params.append('line_items[0][quantity]', '1');
-        params.append('success_url', `${url.origin}/?payment=success`);
-        params.append('cancel_url', `${url.origin}/?payment=cancel`);
-        params.append('client_reference_id', userId);
-
-        const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${stripeKey}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: params.toString()
-        });
-
-        const session = await stripeRes.json() as any;
-        return new Response(JSON.stringify({ url: session.url }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-      }
-    }
-
-    // 3. Stripe Webhook Route
-    if (url.pathname === '/api/stripe/webhook' && request.method === 'POST') {
-      try {
-        const body = await request.text();
-        const event = JSON.parse(body);
-
-        if (event.type === 'checkout.session.completed') {
-          const session = event.data.object;
-          const userId = session.client_reference_id || 'anonymous';
-
-          // Update D1 database & KV identity cache
-          if (this.env.DB) {
-            await this.env.DB.prepare(
-              'INSERT INTO user_subscriptions (user_id, tier, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(user_id) DO UPDATE SET tier = ?, updated_at = CURRENT_TIMESTAMP'
-            ).bind(userId, 'pro', 'pro').run();
-          }
-          await this.env.IDENTITY_CACHE.put(`sub:${userId}`, 'pro', { expirationTtl: 86400 });
-        }
-
-        return new Response(JSON.stringify({ received: true }), { headers: { 'Content-Type': 'application/json' } });
-      } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 400 });
-      }
-    }
 
     // 4. Multi-Tab Edge Browser Search Route
     if (url.pathname === '/api/search' && request.method === 'POST') {
       try {
         const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous';
-        const tier = await this.resolveTier(userId);
-        const isPro = tier === 'pro';
+        const userInfo = await this.resolveTierAndBalance(userId);
+        const isPro = userInfo.tier === 'pro' || userInfo.tier === 'enterprise';
+        const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
 
-        // Rate limit check: free users get 5 searches per day
+        const searchCostCents = mode === 'deep_reasoning' ? 15 : 5;
+
+        // Rate limit check: deduct credits if not pro
         if (!isPro) {
-          const used = await this.getDailyCount();
-          if (used >= FREE_DAILY_LIMIT) {
+          const success = await this.deductCredits(userId, searchCostCents);
+          if (!success) {
             return new Response(JSON.stringify({
-              error: 'daily_limit_reached',
-              message: `You've used all ${FREE_DAILY_LIMIT} free searches for today. Upgrade to Pro for unlimited searches.`,
-              searchesUsed: used,
-              dailyLimit: FREE_DAILY_LIMIT,
-              resetsAt: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getTime() + 86400000
-            }), { status: 429, headers: { 'Content-Type': 'application/json' } });
+              error: 'insufficient_funds',
+              message: `Insufficient Edge Credits. Cost is $${(searchCostCents / 100).toFixed(2)}. Please refill credits on the Personalization portal.`,
+              searchesUsed: 0,
+              dailyLimit: null,
+              resetsAt: null
+            }), { status: 402, headers: { 'Content-Type': 'application/json' } });
           }
         }
-
-        const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
 
         let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
         let deepContentText = '';
@@ -346,10 +281,6 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             };
           }
 
-          if (!isPro) {
-            await this.incrementDailyCount();
-          }
-
           return new Response(JSON.stringify({
             query,
             mode: 'deep_reasoning',
@@ -382,10 +313,6 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
               }
             ]
           });
-
-          if (!isPro) {
-            await this.incrementDailyCount();
-          }
 
           return new Response(JSON.stringify({
             query,
@@ -465,7 +392,18 @@ export default {
       const userIdHeader = request.headers.get('x-user-id') || '';
       const clientIp = request.headers.get('cf-connecting-ip') || 'anonymous_user';
       
-      const userId = userIdHeader || (authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1].slice(0, 16) : clientIp);
+      let userId = userIdHeader || clientIp;
+      if (authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.split(' ')[1];
+          const payloadBase64 = token.split('.')[1];
+          const payloadStr = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+          const payload = JSON.parse(payloadStr);
+          userId = payload.id || payload.sub || payload.user_id || userId;
+        } catch (e) {
+          // ignore parsing error, fallback to IP
+        }
+      }
       const id = env.INSPECTA_LLAMA_DO.idFromName(`user_actor:${userId}`);
       const obj = env.INSPECTA_LLAMA_DO.get(id);
       

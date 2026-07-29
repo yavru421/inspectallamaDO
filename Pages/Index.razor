@@ -402,6 +402,19 @@
         _ => "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
     };
 
+    private async Task EnsureJwtAttached()
+    {
+        var jwt = await JS.InvokeAsync<string>("zlaInterop.getJwtToken");
+        if (!string.IsNullOrEmpty(jwt))
+        {
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
+        }
+        else
+        {
+            Http.DefaultRequestHeaders.Authorization = null;
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
@@ -415,6 +428,7 @@
     {
         try
         {
+            await EnsureJwtAttached();
             var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status", jsonOpts);
             rateLimitHit = userStatus is { IsPro: false, SearchesRemaining: 0 };
@@ -444,6 +458,7 @@
 
         try
         {
+            await EnsureJwtAttached();
             var req = new { query = searchQuery, deepCrawl, mode = selectedMode };
             var response = await Http.PostAsJsonAsync("/api/search", req);
 
@@ -539,24 +554,6 @@
         }
     }
 
-    private async Task GoProCheckout()
-    {
-        try
-        {
-            var response = await Http.PostAsync("/api/stripe/checkout", null);
-            if (response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadFromJsonAsync<CheckoutUrlResponse>();
-                if (!string.IsNullOrEmpty(body?.Url))
-                    NavManager.NavigateTo(body.Url, forceLoad: true);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Checkout error: {ex.Message}");
-        }
-    }
-
     // ── Models ─────────────────────────────────────────────────────────────
     public class UserStatus
     {
@@ -617,10 +614,5 @@
         public string Title { get; set; } = "";
         public string Url { get; set; } = "";
         public string Snippet { get; set; } = "";
-    }
-
-    public class CheckoutUrlResponse
-    {
-        public string Url { get; set; } = "";
     }
 }

@@ -1,0 +1,5 @@
+## [DO-Generated] ZLA Token Burn Acknowledgement
+Model: @cf/meta/llama-3.1-8b-instruct-fp8
+Credits used: 1
+
+Acknowledged. All future heavy text generation payloads will be deterministically routed through the OrchestratorDO edge pipeline to guarantee zero local token burn. This strict Zero-Liability Architecture constraint is now active.
