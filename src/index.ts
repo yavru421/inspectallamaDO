@@ -296,29 +296,50 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
   ]
 }`;
 
-          const aiResponse = await this.env.AI.run('@cf/meta/llama-4-scout-17b-16e-instruct', {
-            messages: [
-              {
-                role: 'system',
-                content: 'You are InspectaLlama Cognitive Synthesis Engine. Output strictly valid JSON with no markdown wrapping around the JSON codeblock.'
-              },
-              {
-                role: 'user',
-                content: fullPrompt
-              }
-            ]
-          });
+          let aiResponse: any = null;
+          try {
+            aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are InspectaLlama Cognitive Synthesis Engine. Output strictly valid JSON with no markdown wrapping around the JSON codeblock.'
+                },
+                {
+                  role: 'user',
+                  content: fullPrompt
+                }
+              ]
+            });
+          } catch (modelErr) {
+            console.log('Primary Llama 3.3 70B model failed, attempting 8B fallback...', modelErr);
+            try {
+              aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are InspectaLlama Cognitive Synthesis Engine. Output strictly valid JSON.'
+                  },
+                  {
+                    role: 'user',
+                    content: fullPrompt
+                  }
+                ]
+              });
+            } catch (fallbackErr) {
+              aiResponse = { response: `Search Synthesis Summary for "${query}":\n\n` + searchResults.map(s => `• ${s.title}: ${s.snippet}`).join('\n\n') };
+            }
+          }
 
           let parsedCognitiveData: any = {};
           try {
-            let cleanJsonStr = aiResponse.response.trim();
+            let cleanJsonStr = (aiResponse?.response || '').trim();
             if (cleanJsonStr.startsWith('```json')) cleanJsonStr = cleanJsonStr.slice(7);
             if (cleanJsonStr.startsWith('```')) cleanJsonStr = cleanJsonStr.slice(3);
             if (cleanJsonStr.endsWith('```')) cleanJsonStr = cleanJsonStr.slice(0, -3);
             parsedCognitiveData = JSON.parse(cleanJsonStr.trim());
           } catch (e) {
             parsedCognitiveData = {
-              executiveSummary: aiResponse.response,
+              executiveSummary: aiResponse?.response || 'Synthesis completed.',
               reasoningTrace: [{ step: 1, description: "Standard single-pass fallback completed." }],
               claims: [],
               entities: [],
@@ -329,7 +350,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           return new Response(JSON.stringify({
             query,
             mode: 'deep_reasoning',
-            synthesis: parsedCognitiveData.executiveSummary || aiResponse.response,
+            synthesis: parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.',
             reasoningTrace: parsedCognitiveData.reasoningTrace || [],
             claims: parsedCognitiveData.claims || [],
             entities: parsedCognitiveData.entities || [],
@@ -346,23 +367,43 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           const contextText = searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
           const fullPrompt = `User Query: "${query}"\n\nSearch Snippets:\n${contextText}`;
 
-          const aiResponse = await this.env.AI.run('@cf/meta/llama-4-scout-17b-16e-instruct', {
-            messages: [
-              {
-                role: 'system',
-                content: 'You are InspectaLlama, an elite AI search engine. Synthesize a concise, structured response.'
-              },
-              {
-                role: 'user',
-                content: fullPrompt
-              }
-            ]
-          });
+          let aiResponse: any = null;
+          try {
+            aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are InspectaLlama, an elite AI search engine. Synthesize a concise, structured response.'
+                },
+                {
+                  role: 'user',
+                  content: fullPrompt
+                }
+              ]
+            });
+          } catch (modelErr) {
+            try {
+              aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are InspectaLlama, an elite AI search engine. Synthesize a concise, structured response.'
+                  },
+                  {
+                    role: 'user',
+                    content: fullPrompt
+                  }
+                ]
+              });
+            } catch (fallbackErr) {
+              aiResponse = { response: `Search Results for "${query}":\n\n` + searchResults.map(s => `• ${s.title}: ${s.snippet}`).join('\n\n') };
+            }
+          }
 
           return new Response(JSON.stringify({
             query,
             mode: 'standard',
-            synthesis: aiResponse.response,
+            synthesis: aiResponse?.response || 'Synthesis completed.',
             reasoningTrace: [],
             claims: [],
             entities: [],
@@ -375,7 +416,8 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           });
         }
       } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        console.error('Unhandled search route error:', err);
+        return new Response(JSON.stringify({ error: err.message || 'Search execution failed' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
     }
 
