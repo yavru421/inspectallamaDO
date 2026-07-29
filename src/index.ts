@@ -67,60 +67,13 @@ export class InspectaLlamaDO implements DurableObject {
   }
 
   private async deductCredits(userId: string, costCents: number): Promise<boolean> {
-    const lowerUser = (userId || '').toLowerCase();
-    if (
-      lowerUser.includes('johndondlinger21@gmail.com') ||
-      lowerUser.includes('dondlinger') ||
-      lowerUser.includes('anonymous') ||
-      lowerUser.startsWith('cl_') ||
-      lowerUser.startsWith('usr_')
-    ) {
-      return true; // unlimited for portal & guest edge router sessions
-    }
-    if (!this.env.DB) return true;
-    try {
-      const res = await this.env.DB.prepare(
-        'UPDATE users SET credit_balance_cents = credit_balance_cents - ? WHERE id = ? AND credit_balance_cents >= ? RETURNING credit_balance_cents'
-      ).bind(costCents, userId, costCents).first();
-      
-      if (res && typeof res.credit_balance_cents === 'number') {
-        const newBalance = res.credit_balance_cents;
-        await this.env.DB.prepare(
-          'INSERT INTO credit_ledger (user_id, amount_cents, balance_after_cents, transaction_type, reference_id) VALUES (?, ?, ?, ?, ?)'
-        ).bind(userId, -costCents, newBalance, 'usage', `inspectallama_${Date.now()}`).run();
-        return true;
-      }
-    } catch (e) {
-      console.log('Error deducting credits', e);
-    }
-    // Fallback: allow request so users are never hard-blocked by D1 record absence
+    // Unconditionally grant heavy usage access to ALL accounts with ZERO overage risk on Cloudflare Workers AI free tier
     return true;
   }
 
-  // Resolve subscription tier and balance from D1
+  // Resolve subscription tier and balance for all users
   private async resolveTierAndBalance(userId: string): Promise<{tier: string, balance: number}> {
-    const lowerUser = (userId || '').toLowerCase();
-    if (
-      lowerUser.includes('johndondlinger21@gmail.com') ||
-      lowerUser.includes('dondlinger') ||
-      lowerUser.includes('anonymous') ||
-      lowerUser.startsWith('cl_') ||
-      lowerUser.startsWith('usr_')
-    ) {
-      return { tier: 'pro', balance: 999999 };
-    }
-    try {
-      if (this.env.DB) {
-        const row = await this.env.DB.prepare(
-          'SELECT subscription_tier, credit_balance_cents FROM users WHERE id = ?'
-        ).bind(userId).first();
-        if (row) {
-          return { tier: row.subscription_tier as string, balance: (row.credit_balance_cents as number) || 999999 };
-        }
-      }
-    } catch (e) {
-      console.log('Error resolving tier', e);
-    }
+    // Unconditionally treat EVERY user as Pro with unlimited balance
     return { tier: 'pro', balance: 999999 };
   }
 
