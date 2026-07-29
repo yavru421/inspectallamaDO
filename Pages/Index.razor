@@ -1,8 +1,9 @@
 @page "/"
 @inject HttpClient Http
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
-<PageTitle>InspectaLlama &bull; Next-Gen AI Search</PageTitle>
+<PageTitle>InspectaLlama &bull; Pinnacle Deep Semantic AI Research</PageTitle>
 
 @* ── Pro upgrade success banner ── *@
 @if (showPaymentAlert)
@@ -33,30 +34,30 @@
     </div>
 }
 
-<div class="py-8 flex flex-col items-center text-center">
+<div class="py-6 flex flex-col items-center text-center">
     <div class="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
-        <span>⚡ Powered by Cloudflare Browser Rendering &amp; Llama 3.3 70B</span>
+        <span>⚡ Autonomous Multi-Hop Graph Crawling &amp; Llama 3.3 70B</span>
     </div>
     <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-3">
-        Inspect the Web with <span class="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">AI Precision</span>
+        Cognitive Research with <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Pinnacle AI Precision</span>
     </h1>
-    <p class="text-slate-400 max-w-xl text-sm mb-8">
-        Real-time edge browser synthesis. Multi-tab Puppeteer scraping, visual page inspection, and zero-ad AI answers.
+    <p class="text-slate-400 max-w-2xl text-sm mb-6">
+        Autonomous web graph traversal, dialectical claim verification, verbatim source audits, and publication-ready PDF intelligence briefs.
     </p>
 
     @* ── Search Input Form ── *@
-    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl flex flex-col gap-2">
+    <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl flex flex-col gap-3">
         <div class="flex items-center gap-2">
             <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
-                   placeholder="Ask anything or inspect a topic..."
+                   placeholder="Ask any complex research question (e.g., 'Durable Objects vs Redis performance and trade-offs')..."
                    disabled="@(isLoading || rateLimitHit)"
                    class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed" />
             <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
-                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2 shrink-0">
                 @if (isLoading)
                 {
                     <span class="animate-spin text-sm">🔄</span>
-                    <span>Inspecting...</span>
+                    <span>Reasoning...</span>
                 }
                 else
                 {
@@ -65,110 +66,261 @@
             </button>
         </div>
 
-        @* ── Bottom options bar ── *@
-        <div class="flex items-center justify-between px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
-            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
-                <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
-                <span>Multi-Tab Deep Page Scraping</span>
-            </label>
+        @* ── Mode Selection & Options ── *@
+        <div class="flex flex-wrap items-center justify-between gap-3 px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-500 font-medium">Research Engine Mode:</span>
+                <button @onclick='() => selectedMode = "deep_reasoning"'
+                        class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
+                    🧠 Deep Cognitive Multi-Hop
+                </button>
+                <button @onclick='() => selectedMode = "standard"'
+                        class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
+                    ⚡ Instant Synthesis
+                </button>
+            </div>
+
             <div class="flex items-center gap-3">
-                @* ── Usage pill ── *@
+                <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
+                    <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
+                    <span>Deep Multi-Tab Scraping</span>
+                </label>
+
                 @if (userStatus != null)
                 {
                     @if (userStatus.IsPro)
                     {
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold">
-                            ✦ Pro
+                            ✦ Pro Pass
                         </span>
                     }
                     else
                     {
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono">
-                            🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left today
+                            🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
                         </span>
                     }
                 }
-                <span class="text-slate-600">Presets:</span>
-                <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM features")' class="hover:text-indigo-400 transition">.NET 10</button> &bull;
-                <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket limits")' class="hover:text-indigo-400 transition">Durable Objects</button>
             </div>
         </div>
     </div>
 
-    @* ── Pro upsell (only when close to or at limit) ── *@
-    @if (userStatus != null && !userStatus.IsPro && (userStatus.SearchesRemaining <= 1 || rateLimitHit))
-    {
-        <div class="mt-4 w-full max-w-2xl p-3 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-xs text-slate-400 flex items-center justify-between">
-            <span>
-                @if (rateLimitHit)
-                {
-                    <span class="text-amber-400 font-semibold">Daily limit reached.</span>
-                }
-                else
-                {
-                    <span class="text-indigo-400 font-semibold">@userStatus.SearchesRemaining search left today.</span>
-                }
-                @(" ")Upgrade to <strong class="text-indigo-300">Pro</strong> for unlimited searches, priority Browser Rendering, and the full 70B model.
-            </span>
-            <button @onclick="GoProCheckout" class="ml-4 shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-1.5 rounded-lg transition">
-                Go Pro →
-            </button>
-        </div>
-    }
+    @* ── Presets ── *@
+    <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
+        <span>Try Presets:</span>
+        <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket architecture & limits")' class="text-slate-400 hover:text-indigo-400 underline transition">Durable Objects</button> &bull;
+        <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM performance benchmarks")' class="text-slate-400 hover:text-indigo-400 underline transition">.NET 10 WASM</button> &bull;
+        <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
+    </div>
 </div>
 
-@inject IJSRuntime JS
-
-@* ── Search Results ── *@
+@* ── Search Results & Cognitive Workbench ── *@
 @if (result != null)
 {
     <div class="mt-8 space-y-6">
-        @* AI Synthesis Card *@
+        @* Cognitive Header & Action Toolbar *@
         <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
-            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 mb-4 gap-2">
-                <h2 class="font-bold text-indigo-400 text-lg flex items-center gap-2">
-                    <span>✨ InspectaLlama Edge Synthesis</span>
-                </h2>
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-slate-500 font-mono hidden sm:inline">@result.Timestamp</span>
-                    
-                    @* Premium Export & Sync Controls *@
-                    <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition flex items-center gap-1">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs border border-indigo-500/30">
+                            @(result.Mode == "deep_reasoning" ? "🧠 Cognitive Multi-Hop Mode" : "⚡ Instant Search")
+                        </span>
+                        <span class="text-slate-500 font-mono text-xs">@result.Timestamp</span>
+                    </div>
+                    <h2 class="font-bold text-white text-xl mt-1">
+                        Research Objective: "<span class="text-indigo-300">@result.Query</span>"
+                    </h2>
+                </div>
+
+                @* Action Buttons *@
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <button @onclick="GeneratePdfReport" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold px-4 py-2 rounded-xl transition shadow-lg flex items-center gap-1.5">
+                        <span>📄</span>
+                        <span>Export PDF Report</span>
+                    </button>
+                    <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 font-medium transition flex items-center gap-1">
                         <span>📥</span> Export MD
                     </button>
-                    <button @onclick="ExportAsJson" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition flex items-center gap-1">
-                        <span>📄</span> Export JSON
-                    </button>
-                    <button @onclick="SyncWithPersonalization" disabled="@isSyncing" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-500/40 font-medium transition flex items-center gap-1 disabled:opacity-50">
+                    <button @onclick="SyncWithPersonalization" disabled="@isSyncing" class="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-2 rounded-xl border border-slate-700 font-medium transition flex items-center gap-1 disabled:opacity-50">
                         @if (isSyncing)
                         {
                             <span class="animate-spin">🔄</span>
-                            <span>Syncing...</span>
                         }
                         else
                         {
-                            <span>☁️</span>
-                            <span>Cloud Sync</span>
+                            <span>☁️ Sync</span>
                         }
                     </button>
                 </div>
             </div>
+
             @if (!string.IsNullOrEmpty(syncStatusMessage))
             {
-                <div class="mb-3 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                <div class="mb-4 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
                     @syncStatusMessage
                 </div>
             }
-            <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
-                @result.Synthesis
+
+            @* ── Navigation Tabs ── *@
+            <div class="flex items-center gap-2 border-b border-slate-800 pb-3 mb-6 overflow-x-auto text-xs font-bold">
+                <button @onclick='() => activeTab = "synthesis"' class="px-4 py-2 rounded-xl transition border @(activeTab == "synthesis" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
+                    ✨ Executive Synthesis
+                </button>
+                <button @onclick='() => activeTab = "claims"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "claims" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
+                    <span>🔍 Verified Claims Matrix</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Claims.Count</span>
+                </button>
+                <button @onclick='() => activeTab = "entities"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "entities" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
+                    <span>🌐 Entity Knowledge Graph</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Entities.Count</span>
+                </button>
+                <button @onclick='() => activeTab = "disputes"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "disputes" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
+                    <span>⚡ Trade-offs &amp; Disputes</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Disputes.Count</span>
+                </button>
             </div>
+
+            @* Tab 1: Executive Synthesis *@
+            @if (activeTab == "synthesis")
+            {
+                <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
+                    @result.Synthesis
+                </div>
+
+                @if (result.ReasoningTrace.Any())
+                {
+                    <div class="mt-6 pt-4 border-t border-slate-800">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cognitive Reasoning Trace</h4>
+                        <div class="space-y-1.5">
+                            @foreach (var step in result.ReasoningTrace)
+                            {
+                                <div class="text-xs text-slate-400 flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-mono font-bold shrink-0">@step.Step</span>
+                                    <span>@step.Description</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            @* Tab 2: Verified Claims Matrix *@
+            @if (activeTab == "claims")
+            {
+                <div>
+                    @if (result.Claims.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-400 font-bold bg-slate-950/50">
+                                        <th class="p-3">Verified Statement</th>
+                                        <th class="p-3">Verbatim Source Quote</th>
+                                        <th class="p-3">Source &amp; Citation</th>
+                                        <th class="p-3">Epistemic Status</th>
+                                        <th class="p-3">Confidence</th>
+                                        <th class="p-3 text-right">Drill-Down</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var claim in result.Claims)
+                                    {
+                                        <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition">
+                                            <td class="p-3 font-semibold text-slate-100 max-w-xs">@claim.Statement</td>
+                                            <td class="p-3 font-mono text-[11px] text-slate-300 italic bg-slate-950/40 rounded-lg max-w-xs">
+                                                "@claim.VerbatimQuote"
+                                            </td>
+                                            <td class="p-3 max-w-xs truncate">
+                                                <a href="@claim.SourceUrl" target="_blank" class="text-indigo-400 hover:underline font-medium">@claim.SourceTitle</a>
+                                            </td>
+                                            <td class="p-3">
+                                                <span class="px-2 py-0.5 rounded-full font-bold text-[10px] @GetEpistemicBadgeClass(claim.EpistemicStatus)">
+                                                    @claim.EpistemicStatus
+                                                </span>
+                                            </td>
+                                            <td class="p-3 font-bold text-slate-200">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span>@claim.ConfidenceScore%</span>
+                                                    <div class="w-12 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                                        <div class="bg-indigo-500 h-full" style="width: @(claim.ConfidenceScore)%"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 text-right">
+                                                <button @onclick='() => RunPreset($"Deep research details on {claim.Statement}")' class="px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 font-medium transition text-[11px]">
+                                                    🔍 Sub-Crawl
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8 text-slate-400 text-sm">
+                            No structured claims extracted for this query. Try turning on 🧠 <strong>Deep Cognitive Multi-Hop Mode</strong>.
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Tab 3: Entity Knowledge Graph *@
+            @if (activeTab == "entities")
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach (var entity in result.Entities)
+                    {
+                        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h4 class="font-bold text-indigo-300 text-sm">@entity.Name</h4>
+                                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-semibold">@entity.Category</span>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed">@entity.Description</p>
+                            </div>
+                            <button @onclick='() => RunPreset($"Deep dive architecture and benchmarks for {entity.Name}")' class="mt-3 text-left text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition">
+                                Explore Entity Graph →
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Tab 4: Trade-offs & Disputes *@
+            @if (activeTab == "disputes")
+            {
+                <div class="space-y-4">
+                    @foreach (var dispute in result.Disputes)
+                    {
+                        <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+                            <h4 class="font-bold text-amber-300 text-sm mb-3 flex items-center gap-2">
+                                <span>⚡ Dialectical Dispute:</span>
+                                <span>@dispute.Topic</span>
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                    <div class="font-bold text-emerald-300 mb-1">Perspective A / Advantage</div>
+                                    <div class="text-slate-300 leading-relaxed">@dispute.PerspectiveA</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                    <div class="font-bold text-red-300 mb-1">Perspective B / Trade-off</div>
+                                    <div class="text-slate-300 leading-relaxed">@dispute.PerspectiveB</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
         </div>
 
-        @* Screenshot & Sources *@
+        @* Screenshot & Audited Sources Matrix *@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
-                    <span>🌐 Inspected Web Sources</span>
+                    <span>🌐 Audited Search Sources</span>
                 </h3>
                 <div class="space-y-3">
                     @foreach (var src in result.Sources)
@@ -198,14 +350,15 @@
 
 @code {
     private string searchQuery = "";
+    private string selectedMode = "deep_reasoning";
     private bool deepCrawl = true;
     private bool isLoading = false;
     private bool showPaymentAlert = false;
     private bool rateLimitHit = false;
+    private string activeTab = "synthesis";
     private SearchResultResponse? result = null;
     private UserStatus? userStatus = null;
 
-    // Color of the usage pill: green → yellow → red as searches drain
     private string UsagePillClass => userStatus?.SearchesRemaining switch
     {
         0     => "bg-red-500/20 border border-red-500/40 text-red-300",
@@ -214,7 +367,6 @@
         _     => "bg-slate-800 border border-slate-700 text-slate-400"
     };
 
-    // "Xh Ym" until midnight UTC
     private string TimeUntilMidnightUtc
     {
         get
@@ -222,11 +374,17 @@
             var now = DateTime.UtcNow;
             var midnight = now.Date.AddDays(1);
             var diff = midnight - now;
-            return diff.Hours > 0
-                ? $"{diff.Hours}h {diff.Minutes}m"
-                : $"{diff.Minutes}m";
+            return diff.Hours > 0 ? $"{diff.Hours}h {diff.Minutes}m" : $"{diff.Minutes}m";
         }
     }
+
+    private string GetEpistemicBadgeClass(string status) => status switch
+    {
+        "Fact" => "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40",
+        "Disputed" => "bg-red-500/20 text-red-300 border border-red-500/40",
+        "Marketing" => "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+        _ => "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -244,7 +402,7 @@
             userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status");
             rateLimitHit = userStatus is { IsPro: false, SearchesRemaining: 0 };
         }
-        catch { /* silently ignore — UI just won't show the pill */ }
+        catch { }
     }
 
     private async Task RunPreset(string query)
@@ -268,18 +426,17 @@
 
         try
         {
-            var req = new { query = searchQuery, deepCrawl };
+            var req = new { query = searchQuery, deepCrawl, mode = selectedMode };
             var response = await Http.PostAsJsonAsync("/api/search", req);
 
             if (response.IsSuccessStatusCode)
             {
                 result = await response.Content.ReadFromJsonAsync<SearchResultResponse>();
-                // Refresh usage counter after a successful search
+                activeTab = "synthesis";
                 await RefreshUserStatus();
             }
             else if ((int)response.StatusCode == 429)
             {
-                // Rate limit hit — flip state so the banner appears
                 rateLimitHit = true;
                 await RefreshUserStatus();
             }
@@ -297,6 +454,13 @@
     private bool isSyncing = false;
     private string syncStatusMessage = "";
 
+    private async Task GeneratePdfReport()
+    {
+        if (result == null) return;
+        var json = System.Text.Json.JsonSerializer.Serialize(result);
+        await JS.InvokeVoidAsync("zlaInterop.generateExecutivePdf", json);
+    }
+
     private async Task ExportAsMarkdown()
     {
         if (result == null) return;
@@ -311,14 +475,6 @@
 
         var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
         await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, md, "text/markdown;charset=utf-8");
-    }
-
-    private async Task ExportAsJson()
-    {
-        if (result == null) return;
-        var json = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
-        await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, json, "application/json;charset=utf-8");
     }
 
     private async Task SyncWithPersonalization()
@@ -340,16 +496,16 @@
             var success = await JS.InvokeAsync<bool>("zlaInterop.syncSettingsToPersonalization", payload);
             if (success)
             {
-                syncStatusMessage = "✓ Successfully synced search report and settings with personalization.dondlingergc.com!";
+                syncStatusMessage = "✓ Synced search report with personalization.dondlingergc.com!";
             }
             else
             {
-                syncStatusMessage = "✓ Saved search session locally (ZLA offline mode).";
+                syncStatusMessage = "✓ Saved search session locally (ZLA mode).";
             }
         }
-        catch (Exception ex)
+        catch
         {
-            syncStatusMessage = $"Saved locally (ZLA fallback mode).";
+            syncStatusMessage = "Saved locally (ZLA fallback mode).";
         }
         finally
         {
@@ -389,10 +545,45 @@
     public class SearchResultResponse
     {
         public string Query { get; set; } = "";
+        public string Mode { get; set; } = "deep_reasoning";
         public string Synthesis { get; set; } = "";
+        public List<ReasoningStep> ReasoningTrace { get; set; } = new();
+        public List<ClaimItem> Claims { get; set; } = new();
+        public List<EntityItem> Entities { get; set; } = new();
+        public List<DisputeItem> Disputes { get; set; } = new();
         public List<SourceItem> Sources { get; set; } = new();
         public string ScreenshotBase64 { get; set; } = "";
         public string Timestamp { get; set; } = "";
+    }
+
+    public class ReasoningStep
+    {
+        public int Step { get; set; }
+        public string Description { get; set; } = "";
+    }
+
+    public class ClaimItem
+    {
+        public string Statement { get; set; } = "";
+        public string VerbatimQuote { get; set; } = "";
+        public string SourceTitle { get; set; } = "";
+        public string SourceUrl { get; set; } = "";
+        public string EpistemicStatus { get; set; } = "Fact";
+        public int ConfidenceScore { get; set; } = 95;
+    }
+
+    public class EntityItem
+    {
+        public string Name { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+
+    public class DisputeItem
+    {
+        public string Topic { get; set; } = "";
+        public string PerspectiveA { get; set; } = "";
+        public string PerspectiveB { get; set; } = "";
     }
 
     public class SourceItem

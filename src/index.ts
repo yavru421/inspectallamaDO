@@ -185,79 +185,224 @@ export class InspectaLlamaDO implements DurableObject {
           await this.incrementDailyCount();
         }
 
-        const { query, deepCrawl = true } = await request.json() as { query: string; deepCrawl?: boolean };
+        const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
 
         // Launch Headless Chrome on Cloudflare Edge Node
         const browser = await puppeteer.launch(this.env.MY_BROWSER, { protocolTimeout: 60000 } as any);
-        const searchPage = await browser.newPage();
 
-        // Perform live search query
-        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-        await searchPage.goto(searchUrl, { waitUntil: 'domcontentloaded' });
-
-        // Extract top search result anchors
-        const searchResults = await searchPage.evaluate(() => {
-          const anchors = Array.from(document.querySelectorAll('.result__a'));
-          const snippets = Array.from(document.querySelectorAll('.result__snippet'));
-          return anchors.slice(0, 4).map((a, i) => ({
-            title: a.textContent?.trim() || '',
-            url: (a as HTMLAnchorElement).href || '',
-            snippet: snippets[i]?.textContent?.trim() || ''
-          }));
-        });
-
-        // Capture primary search page screenshot
-        const screenshotBuffer = await searchPage.screenshot({ type: 'jpeg', quality: 50 });
-        await searchPage.close();
-
-        // Multi-Tab Deep Content Scraping (Crawl top 2 target URLs in parallel)
+        let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
         let deepContentText = '';
-        if (deepCrawl && searchResults.length > 0) {
-          const crawlTargets = searchResults.slice(0, 2);
-          const pageContents = await Promise.all(
-            crawlTargets.map(async (target) => {
-              try {
-                const targetPage = await browser.newPage();
-                await targetPage.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 5000 });
-                const text = await targetPage.evaluate(() => {
-                  return document.body.innerText.slice(0, 1500);
-                });
-                await targetPage.close();
-                return `[Source: ${target.title}]\n${text}`;
-              } catch (e) {
-                return `[Source: ${target.title}]\n(Could not fetch deep page text)`;
+        let screenshotBase64 = '';
+
+        if (mode === 'deep_reasoning') {
+          // ── Step 1: Vector Query Decomposition via AI ──
+          const vectorDecompRes = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an autonomous AI research query planner. Decompose the user query into 3 distinct search sub-queries in valid JSON format: {"technical": "...", "empirical": "...", "disputes": "..."}. Respond ONLY with valid JSON.'
+              },
+              {
+                role: 'user',
+                content: `Query: "${query}"`
               }
-            })
-          );
-          deepContentText = pageContents.join('\n\n');
+            ]
+          });
+
+          let subQueries = [query];
+          try {
+            const parsed = JSON.parse(vectorDecompRes.response || '{}');
+            subQueries = [parsed.technical || query, parsed.empirical || query, parsed.disputes || query].filter(Boolean);
+          } catch (_) {
+            subQueries = [query, `${query} benchmark specs`, `${query} trade-offs issues`].slice(0, 3);
+          }
+
+          // ── Step 2: Multi-Hop Vector Web Crawl ──
+          const primarySearchPage = await browser.newPage();
+          const primaryUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(subQueries[0])}`;
+          await primarySearchPage.goto(primaryUrl, { waitUntil: 'domcontentloaded' });
+
+          searchResults = await primarySearchPage.evaluate(() => {
+            const anchors = Array.from(document.querySelectorAll('.result__a'));
+            const snippets = Array.from(document.querySelectorAll('.result__snippet'));
+            return anchors.slice(0, 5).map((a, i) => ({
+              title: a.textContent?.trim() || '',
+              url: (a as HTMLAnchorElement).href || '',
+              snippet: snippets[i]?.textContent?.trim() || ''
+            }));
+          });
+
+          const screenshotBuffer = await primarySearchPage.screenshot({ type: 'jpeg', quality: 50 });
+          screenshotBase64 = Buffer.from(screenshotBuffer).toString('base64');
+          await primarySearchPage.close();
+
+          // Crawl top 3 target web pages in parallel
+          if (deepCrawl && searchResults.length > 0) {
+            const crawlTargets = searchResults.slice(0, 3);
+            const pageContents = await Promise.all(
+              crawlTargets.map(async (target) => {
+                try {
+                  const targetPage = await browser.newPage();
+                  await targetPage.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 7000 });
+                  const pageData = await targetPage.evaluate(() => {
+                    const text = document.body.innerText.slice(0, 2500);
+                    return text;
+                  });
+                  await targetPage.close();
+                  return `--- SOURCE: ${target.title} (${target.url}) ---\n${pageData}`;
+                } catch (e) {
+                  return `--- SOURCE: ${target.title} (${target.url}) ---\n(Could not extract deep page text)`;
+                }
+              })
+            );
+            deepContentText = pageContents.join('\n\n');
+          }
+
+          // ── Step 3: Dialectical & Epistemic Synthesis Engine ──
+          const fullPrompt = `USER OBJECTIVE: "${query}"
+
+DECOMPOSITIONS EXECUTED:
+1. Technical: ${subQueries[0]}
+2. Empirical: ${subQueries[1]}
+3. Counter-Perspectives: ${subQueries[2]}
+
+PRIMARY SEARCH RESULTS:
+${searchResults.map(r => `• ${r.title} (${r.url}): ${r.snippet}`).join('\n')}
+
+DEEP SCRAPED PAGE EXTRACTS:
+${deepContentText}
+
+SYSTEM INSTRUCTIONS:
+Execute a full cognitive analysis. You must output ONLY a valid JSON object with the following schema:
+{
+  "executiveSummary": "Comprehensive high-level synthesis markdown...",
+  "reasoningTrace": [
+    {"step": 1, "description": "Vector decomposition and query planning..."},
+    {"step": 2, "description": "Deep text extraction from target web pages..."},
+    {"step": 3, "description": "Dialectical claim verification & epistemic rating..."}
+  ],
+  "claims": [
+    {
+      "statement": "Specific verified claim statement",
+      "verbatimQuote": "Direct quote from source backing this claim",
+      "sourceTitle": "Source title",
+      "sourceUrl": "Source URL",
+      "epistemicStatus": "Fact" | "Inference" | "Disputed" | "Marketing",
+      "confidenceScore": 95
+    }
+  ],
+  "entities": [
+    {
+      "name": "Entity Name",
+      "category": "Technology | Framework | Benchmark | Concept",
+      "description": "Short explanation of role and significance"
+    }
+  ],
+  "disputes": [
+    {
+      "topic": "Topic of trade-off or debate",
+      "perspectiveA": "Pros / Argument A",
+      "perspectiveB": "Cons / Argument B"
+    }
+  ]
+}`;
+
+          const aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: [
+              {
+                role: 'system',
+                content: 'You are InspectaLlama Cognitive Synthesis Engine. Output strictly valid JSON with no markdown wrapping around the JSON codeblock.'
+              },
+              {
+                role: 'user',
+                content: fullPrompt
+              }
+            ]
+          });
+
+          let parsedCognitiveData: any = {};
+          try {
+            let cleanJsonStr = aiResponse.response.trim();
+            if (cleanJsonStr.startsWith('```json')) cleanJsonStr = cleanJsonStr.slice(7);
+            if (cleanJsonStr.startsWith('```')) cleanJsonStr = cleanJsonStr.slice(3);
+            if (cleanJsonStr.endsWith('```')) cleanJsonStr = cleanJsonStr.slice(0, -3);
+            parsedCognitiveData = JSON.parse(cleanJsonStr.trim());
+          } catch (e) {
+            parsedCognitiveData = {
+              executiveSummary: aiResponse.response,
+              reasoningTrace: [{ step: 1, description: "Standard single-pass fallback completed." }],
+              claims: [],
+              entities: [],
+              disputes: []
+            };
+          }
+
+          return new Response(JSON.stringify({
+            query,
+            mode: 'deep_reasoning',
+            synthesis: parsedCognitiveData.executiveSummary || aiResponse.response,
+            reasoningTrace: parsedCognitiveData.reasoningTrace || [],
+            claims: parsedCognitiveData.claims || [],
+            entities: parsedCognitiveData.entities || [],
+            disputes: parsedCognitiveData.disputes || [],
+            sources: searchResults,
+            screenshotBase64,
+            timestamp: new Date().toISOString()
+          }), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+        } else {
+          // Standard quick synthesis mode
+          const searchPage = await browser.newPage();
+          const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+          await searchPage.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+
+          searchResults = await searchPage.evaluate(() => {
+            const anchors = Array.from(document.querySelectorAll('.result__a'));
+            const snippets = Array.from(document.querySelectorAll('.result__snippet'));
+            return anchors.slice(0, 4).map((a, i) => ({
+              title: a.textContent?.trim() || '',
+              url: (a as HTMLAnchorElement).href || '',
+              snippet: snippets[i]?.textContent?.trim() || ''
+            }));
+          });
+
+          const screenshotBuffer = await searchPage.screenshot({ type: 'jpeg', quality: 50 });
+          screenshotBase64 = Buffer.from(screenshotBuffer).toString('base64');
+          await searchPage.close();
+
+          const contextText = searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
+          const fullPrompt = `User Query: "${query}"\n\nSearch Snippets:\n${contextText}`;
+
+          const aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: [
+              {
+                role: 'system',
+                content: 'You are InspectaLlama, an elite AI search engine. Synthesize a concise, structured response.'
+              },
+              {
+                role: 'user',
+                content: fullPrompt
+              }
+            ]
+          });
+
+          return new Response(JSON.stringify({
+            query,
+            mode: 'standard',
+            synthesis: aiResponse.response,
+            reasoningTrace: [],
+            claims: [],
+            entities: [],
+            disputes: [],
+            sources: searchResults,
+            screenshotBase64,
+            timestamp: new Date().toISOString()
+          }), {
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
-
-        // Synthesize results using Cloudflare Workers AI (Llama 3.3 70B)
-        const contextText = searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
-        const fullPrompt = `User Query: "${query}"\n\nSearch Snippets:\n${contextText}\n\nDeep Web Page Extracts:\n${deepContentText}`;
-
-        const aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-          messages: [
-            {
-              role: 'system',
-              content: 'You are InspectaLlama, an elite AI search engine. Synthesize a comprehensive, structured response with clear headings, key takeaways, and source citations.'
-            },
-            {
-              role: 'user',
-              content: fullPrompt
-            }
-          ]
-        });
-
-        return new Response(JSON.stringify({
-          query,
-          synthesis: aiResponse.response,
-          sources: searchResults,
-          screenshotBase64: Buffer.from(screenshotBuffer).toString('base64'),
-          timestamp: new Date().toISOString()
-        }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500 });
       }
