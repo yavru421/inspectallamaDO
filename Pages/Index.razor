@@ -415,7 +415,8 @@
     {
         try
         {
-            userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status");
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status", jsonOpts);
             rateLimitHit = userStatus is { IsPro: false, SearchesRemaining: 0 };
         }
         catch { }
@@ -448,7 +449,8 @@
 
             if (response.IsSuccessStatusCode)
             {
-                result = await response.Content.ReadFromJsonAsync<SearchResultResponse>();
+                var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
                 activeTab = "synthesis";
                 await RefreshUserStatus();
             }
