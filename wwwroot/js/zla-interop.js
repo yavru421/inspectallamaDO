@@ -123,5 +123,91 @@ window.zlaInterop = {
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    },
+
+    // ── Central Personalization SSO & Identity Interop ──
+    checkPersonalizationSession: async function () {
+        const jwt = localStorage.getItem('inspectallamado_jwt');
+        const headers = { 'Accept': 'application/json' };
+        if (jwt) {
+            headers['Authorization'] = 'Bearer ' + jwt;
+        }
+
+        try {
+            const response = await fetch('https://personalization.dondlingergc.com/api/auth/me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: headers
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return JSON.stringify({
+                    isAuthenticated: true,
+                    userId: data.user_id || data.id || 'usr_personalization',
+                    email: data.email || '',
+                    name: data.name || data.display_name || 'Dondlinger User',
+                    subscriptionTier: data.subscription_tier || data.tier || 'free',
+                    creditBalance: data.credit_balance ?? data.credits ?? 0,
+                    avatarUrl: data.avatar_url || ''
+                });
+            }
+        } catch (e) {
+            console.warn('[ZLA SSO] Personalization endpoint offline or unauthenticated fallback:', e);
+        }
+
+        // Offline / Unauthenticated ZLA Fallback
+        return JSON.stringify({
+            isAuthenticated: false,
+            userId: 'anonymous_local',
+            email: '',
+            name: 'Guest User',
+            subscriptionTier: 'free',
+            creditBalance: 0,
+            avatarUrl: ''
+        });
+    },
+
+    getJwtToken: function () {
+        return localStorage.getItem('inspectallamado_jwt') || '';
+    },
+
+    setJwtToken: function (token) {
+        if (token) {
+            localStorage.setItem('inspectallamado_jwt', token);
+        } else {
+            localStorage.removeItem('inspectallamado_jwt');
+        }
+    },
+
+    syncSettingsToPersonalization: async function (settingsJson) {
+        const jwt = localStorage.getItem('inspectallamado_jwt');
+        const headers = { 'Content-Type': 'application/json' };
+        if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+
+        try {
+            const res = await fetch('https://personalization.dondlingergc.com/api/settings', {
+                method: 'POST',
+                credentials: 'include',
+                headers: headers,
+                body: settingsJson
+            });
+            return res.ok;
+        } catch (e) {
+            console.error('[ZLA Sync] Sync error:', e);
+            return false;
+        }
+    },
+
+    downloadFile: function (filename, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 };

@@ -283,19 +283,69 @@ export class InspectaLlamaDO implements DurableObject {
   }
 }
 
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get('Origin') || '';
+  const allowedOrigins = [
+    'https://personalization.dondlingergc.com',
+    'https://inspectallamado.dondlingergc.com',
+    'http://localhost:5000',
+    'http://localhost:5173'
+  ];
+  
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : 'https://personalization.dondlingergc.com';
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, x-user-id, x-requested-with'
+  };
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    const corsHeaders = getCorsHeaders(request);
+
+    // Handle CORS Preflight OPTIONS requests
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
+    }
 
     // Route search & WebSocket requests to per-user stateful Durable Object instances
     if (url.pathname.startsWith('/api/') || request.headers.get('Upgrade') === 'websocket') {
-      const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous_user';
+      const authHeader = request.headers.get('Authorization') || '';
+      const userIdHeader = request.headers.get('x-user-id') || '';
+      const clientIp = request.headers.get('cf-connecting-ip') || 'anonymous_user';
+      
+      const userId = userIdHeader || (authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1].slice(0, 16) : clientIp);
       const id = env.INSPECTA_LLAMA_DO.idFromName(`user_actor:${userId}`);
       const obj = env.INSPECTA_LLAMA_DO.get(id);
-      return obj.fetch(request);
+      
+      const response = await obj.fetch(request);
+      
+      // Inject CORS headers into DO response
+      const newHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+      
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders
+      });
     }
 
     // Serve static Blazor WASM assets
-    return env.ASSETS ? env.ASSETS.fetch(request) : new Response('InspectaLlama Worker Active', { status: 200 });
+    const response = env.ASSETS ? await env.ASSETS.fetch(request) : new Response('InspectaLlama Worker Active', { status: 200 });
+    const newHeaders = new Headers(response.headers);
+    Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders
+    });
   }
 };

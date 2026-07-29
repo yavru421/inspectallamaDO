@@ -10,8 +10,44 @@
             <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">Durable Object AI</span>
         </div>
         <div class="flex items-center gap-4">
-            <a href="https://personalization.dondlingergc.com" target="_blank" class="text-xs text-slate-400 hover:text-slate-200 transition">Identity Portal</a>
-            
+            @if (userSession != null && userSession.IsAuthenticated)
+            {
+                <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 text-white font-bold flex items-center justify-center text-xs">
+                        @(string.IsNullOrEmpty(userSession.Name) ? "D" : userSession.Name.Substring(0, 1).ToUpper())
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-slate-200">@userSession.Name</span>
+                        <span class="text-[10px] text-slate-400">@userSession.Email</span>
+                    </div>
+                    
+                    @if (userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise")
+                    {
+                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase">
+                            👑 @userSession.SubscriptionTier
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+                            Free Tier (@userSession.CreditBalance credits)
+                        </span>
+                    }
+
+                    <a href="https://personalization.dondlingergc.com/account" target="_blank" title="Manage Account & Settings"
+                       class="ml-1 text-slate-400 hover:text-white transition">
+                        ⚙️
+                    </a>
+                </div>
+            }
+            else
+            {
+                <a href="https://personalization.dondlingergc.com/login?redirect=https://inspectallamado.dondlingergc.com" target="_blank"
+                   class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-3 py-1.5 bg-indigo-500/10">
+                    🔑 Sign In with Dondlinger SSO
+                </a>
+            }
+
             @if (isPro)
             {
                 <span class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5">
@@ -36,28 +72,53 @@
         @Body
     </main>
 
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        InspectaLlama Engine &copy; 2026 &bull; Cloudflare Edge Durable Objects &amp; Browser Rendering
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 flex flex-col items-center gap-1">
+        <div>InspectaLlama Engine &copy; 2026 &bull; Cloudflare Edge Durable Objects &amp; Browser Rendering</div>
+        <div class="text-[11px] text-slate-600">Integrated with Central Dondlinger Identity Portal (personalization.dondlingergc.com)</div>
     </footer>
 </div>
 
 @code {
     private bool isPro = false;
     private bool isCheckoutLoading = false;
+    private PersonalizationSession? userSession = null;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FetchUserSession();
+            StateHasChanged();
+        }
+    }
+
+    private async Task FetchUserSession()
     {
         try
         {
-            var res = await Http.GetFromJsonAsync<UserStatusResponse>("/api/user/status");
-            if (res != null)
+            var sessionJson = await JS.InvokeAsync<string>("zlaInterop.checkPersonalizationSession");
+            if (!string.IsNullOrEmpty(sessionJson))
             {
-                isPro = res.IsPro;
+                userSession = System.Text.Json.JsonSerializer.Deserialize<PersonalizationSession>(sessionJson, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (userSession != null && (userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise"))
+                {
+                    isPro = true;
+                }
+            }
+
+            var res = await Http.GetFromJsonAsync<UserStatusResponse>("/api/user/status");
+            if (res != null && res.IsPro)
+            {
+                isPro = true;
             }
         }
         catch (Exception)
         {
-            // Fallback for offline dev
+            // Fallback for offline ZLA execution
         }
     }
 
@@ -84,6 +145,17 @@
         {
             isCheckoutLoading = false;
         }
+    }
+
+    public class PersonalizationSession
+    {
+        public bool IsAuthenticated { get; set; }
+        public string UserId { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string SubscriptionTier { get; set; } = "free";
+        public int CreditBalance { get; set; }
+        public string AvatarUrl { get; set; } = "";
     }
 
     public class UserStatusResponse

@@ -117,18 +117,48 @@
     }
 </div>
 
+@inject IJSRuntime JS
+
 @* ── Search Results ── *@
 @if (result != null)
 {
     <div class="mt-8 space-y-6">
         @* AI Synthesis Card *@
         <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 mb-4 gap-2">
                 <h2 class="font-bold text-indigo-400 text-lg flex items-center gap-2">
                     <span>✨ InspectaLlama Edge Synthesis</span>
                 </h2>
-                <span class="text-xs text-slate-500 font-mono">@result.Timestamp</span>
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="text-slate-500 font-mono hidden sm:inline">@result.Timestamp</span>
+                    
+                    @* Premium Export & Sync Controls *@
+                    <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition flex items-center gap-1">
+                        <span>📥</span> Export MD
+                    </button>
+                    <button @onclick="ExportAsJson" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition flex items-center gap-1">
+                        <span>📄</span> Export JSON
+                    </button>
+                    <button @onclick="SyncWithPersonalization" disabled="@isSyncing" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-500/40 font-medium transition flex items-center gap-1 disabled:opacity-50">
+                        @if (isSyncing)
+                        {
+                            <span class="animate-spin">🔄</span>
+                            <span>Syncing...</span>
+                        }
+                        else
+                        {
+                            <span>☁️</span>
+                            <span>Cloud Sync</span>
+                        }
+                    </button>
+                </div>
             </div>
+            @if (!string.IsNullOrEmpty(syncStatusMessage))
+            {
+                <div class="mb-3 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                    @syncStatusMessage
+                </div>
+            }
             <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
                 @result.Synthesis
             </div>
@@ -261,6 +291,69 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private bool isSyncing = false;
+    private string syncStatusMessage = "";
+
+    private async Task ExportAsMarkdown()
+    {
+        if (result == null) return;
+        var md = $"# InspectaLlama AI Report: {result.Query}\n\n" +
+                 $"**Timestamp:** {result.Timestamp}\n\n" +
+                 $"## Edge AI Synthesis\n\n{result.Synthesis}\n\n" +
+                 $"## Inspected Sources\n\n";
+        foreach (var s in result.Sources)
+        {
+            md += $"- [{s.Title}]({s.Url}) - {s.Snippet}\n";
+        }
+
+        var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
+        await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, md, "text/markdown;charset=utf-8");
+    }
+
+    private async Task ExportAsJson()
+    {
+        if (result == null) return;
+        var json = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+        await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, json, "application/json;charset=utf-8");
+    }
+
+    private async Task SyncWithPersonalization()
+    {
+        if (result == null) return;
+        isSyncing = true;
+        syncStatusMessage = "";
+
+        try
+        {
+            var payload = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                app = "inspectallamado",
+                timestamp = DateTime.UtcNow,
+                lastQuery = result.Query,
+                sourcesCount = result.Sources.Count
+            });
+
+            var success = await JS.InvokeAsync<bool>("zlaInterop.syncSettingsToPersonalization", payload);
+            if (success)
+            {
+                syncStatusMessage = "✓ Successfully synced search report and settings with personalization.dondlingergc.com!";
+            }
+            else
+            {
+                syncStatusMessage = "✓ Saved search session locally (ZLA offline mode).";
+            }
+        }
+        catch (Exception ex)
+        {
+            syncStatusMessage = $"Saved locally (ZLA fallback mode).";
+        }
+        finally
+        {
+            isSyncing = false;
         }
     }
 

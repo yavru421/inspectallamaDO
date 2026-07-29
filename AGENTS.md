@@ -65,3 +65,14 @@ Whenever initializing, updating, or maintaining system-wide configuration files 
 When brainstorming, exploring system architectures, or proposing R&D vectors, NEVER frame ideas around monetary metrics ($$ savings, ROI, enterprise cost reduction, or commercial SaaS replacement) unless explicitly requested by the user. 
 Focus EXCLUSIVELY on raw technical curiosity, computational elegance, hardware acceleration, novel system paradigms, and tangible daily friction elimination.
 </RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Semantic Trajectory & Operator Identity Invariant:**
+Whenever summarizing or visualizing historical telemetry, user growth, or session history (e.g. `/remember_recent`, `/telemetry`, `/mind`), NEVER default to generic process metadata (such as step volume, diurnal activity, or window focus). 
+Telemetry MUST always perform semantic/linguistic extraction to visualize:
+1. Toolchain & IDE Transitions (e.g., VSCode -> Cursor).
+2. AI Model & Engine Supremacy (e.g., Antigravity vs OpenAI/Claude).
+3. Core Architectural Entrenchment (e.g., Cloudflare Edge, ZLA, DuckDB, PowerShell).
+4. Philosophical & Technical Milestones (e.g., Codex manifestos and breakthroughs).
+</RULE[AGENTS.md]>
+
