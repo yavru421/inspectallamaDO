@@ -236,20 +236,27 @@ export class InspectaLlamaDO implements DurableObject {
           screenshotBase64 = Buffer.from(screenshotBuffer).toString('base64');
           await primarySearchPage.close();
 
-          // Crawl top 3 target web pages in parallel
+          // Crawl top 3 target web pages in parallel using fast worker fetch
           if (deepCrawl && searchResults.length > 0) {
             const crawlTargets = searchResults.slice(0, 3);
             const pageContents = await Promise.all(
               crawlTargets.map(async (target) => {
                 try {
-                  const targetPage = await browser.newPage();
-                  await targetPage.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 7000 });
-                  const pageData = await targetPage.evaluate(() => {
-                    const text = document.body.innerText.slice(0, 2500);
-                    return text;
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 3000);
+                  const res = await fetch(target.url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                    signal: controller.signal
                   });
-                  await targetPage.close();
-                  return `--- SOURCE: ${target.title} (${target.url}) ---\n${pageData}`;
+                  clearTimeout(timeoutId);
+                  const html = await res.text();
+                  // Clean tags and extract text snippet
+                  const cleanText = html.replace(/<script\b[^<]*>[\s\S]*?<\/script>/gi, '')
+                                       .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, '')
+                                       .replace(/<[^>]+>/g, ' ')
+                                       .replace(/\s+/g, ' ')
+                                       .slice(0, 2500);
+                  return `--- SOURCE: ${target.title} (${target.url}) ---\n${cleanText}`;
                 } catch (e) {
                   return `--- SOURCE: ${target.title} (${target.url}) ---\n(Could not extract deep page text)`;
                 }
