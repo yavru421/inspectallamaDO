@@ -21,22 +21,24 @@
                         <span class="text-[10px] text-slate-400">@userSession.Email</span>
                     </div>
                     
-                    @if (userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise")
+                    @if (isPro || userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise")
                     {
-                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase">
-                            👑 @userSession.SubscriptionTier
-                        </span>
+                        <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
+                           class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase hover:bg-emerald-500/30 transition">
+                            👑 Unlimited Pro
+                        </a>
                     }
                     else
                     {
-                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700 font-mono">
-                            Free Tier (@userSession.CreditBalance credits)
-                        </span>
+                        <a href="https://personalization.dondlingergc.com/credits" target="_blank"
+                           class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 font-mono transition">
+                            💳 @userSession.CreditBalance Credits
+                        </a>
                     }
 
                     <a href="https://personalization.dondlingergc.com/account" target="_blank" title="Manage Account & Settings"
                        class="ml-1 text-slate-400 hover:text-white transition">
-                        ⚙️
+                        ⚙️ Settings
                     </a>
                 </div>
             }
@@ -44,26 +46,23 @@
             {
                 <a href="https://personalization.dondlingergc.com" target="_blank"
                    class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-3 py-1.5 bg-indigo-500/10">
-                    🔑 Sign In with Dondlinger SSO
+                    🔑 Sign In (personalization.dondlingergc.com)
                 </a>
             }
 
             @if (isPro)
             {
-                <span class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5">
-                    <span>👑</span> Inspecta Pro
-                </span>
+                <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
+                   class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5 hover:bg-emerald-500/30 transition">
+                    <span>👑</span> Inspecta Pro (Active)
+                </a>
             }
             else
             {
-                <button @onclick="InitiateStripeCheckout" disabled="@isCheckoutLoading" 
-                        class="text-xs bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-                    @if (isCheckoutLoading)
-                    {
-                        <span class="animate-spin">🔄</span>
-                    }
-                    <span>Upgrade Pro ($9.99)</span>
-                </button>
+                <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
+                   class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                    <span>Upgrade Pro / Manage Credits →</span>
+                </a>
             }
         </div>
     </header>

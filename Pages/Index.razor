@@ -24,13 +24,28 @@
         <div class="flex items-center gap-2">
             <span class="text-xl">⏳</span>
             <div>
-                <span class="font-bold">You've used all 5 free searches for today.</span>
-                <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc</span>
+                <span class="font-bold">Daily free search quota reached.</span>
+                <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc or manage credits on personalization portal.</span>
             </div>
         </div>
-        <button @onclick="GoProCheckout" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">
-            Upgrade to Pro →
-        </button>
+        <a href="https://personalization.dondlingergc.com/subscription" target="_blank" 
+           class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition inline-flex items-center gap-1">
+            Upgrade / Add Credits →
+        </a>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="mb-6 p-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">⚠️</span>
+            <div>
+                <span class="font-bold">Search Execution Notice:</span>
+                <span class="ml-2">@errorMessage</span>
+            </div>
+        </div>
+        <button @onclick="() => errorMessage = null" class="text-red-400 hover:text-white font-bold">&times;</button>
     </div>
 }
 
@@ -356,6 +371,7 @@
     private bool showPaymentAlert = false;
     private bool rateLimitHit = false;
     private string activeTab = "synthesis";
+    private string? errorMessage = null;
     private SearchResultResponse? result = null;
     private UserStatus? userStatus = null;
 
@@ -422,6 +438,7 @@
         if (string.IsNullOrWhiteSpace(searchQuery) || rateLimitHit) return;
 
         isLoading = true;
+        errorMessage = null;
         result = null;
 
         try
@@ -440,9 +457,15 @@
                 rateLimitHit = true;
                 await RefreshUserStatus();
             }
+            else
+            {
+                var bodyText = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Search engine encountered an issue ({response.StatusCode}). Quota was not deducted. Details: {bodyText}";
+            }
         }
         catch (Exception ex)
         {
+            errorMessage = $"Search failed: {ex.Message}. Quota was not deducted.";
             Console.WriteLine($"Search error: {ex.Message}");
         }
         finally

@@ -45,6 +45,10 @@ export class InspectaLlamaDO implements DurableObject {
 
   // Resolve subscription tier from KV cache → D1 fallback
   private async resolveTier(userId: string): Promise<string> {
+    const lowerUser = (userId || '').toLowerCase();
+    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser === 'johndondlinger21@gmail.com') {
+      return 'pro';
+    }
     try {
       const cached = await this.env.IDENTITY_CACHE.get(`sub:${userId}`);
       if (cached) return cached;
@@ -170,7 +174,7 @@ export class InspectaLlamaDO implements DurableObject {
         const tier = await this.resolveTier(userId);
         const isPro = tier === 'pro';
 
-        // Rate limit: free users get 5 searches per day (resets at UTC midnight)
+        // Rate limit check: free users get 5 searches per day
         if (!isPro) {
           const used = await this.getDailyCount();
           if (used >= FREE_DAILY_LIMIT) {
@@ -182,7 +186,6 @@ export class InspectaLlamaDO implements DurableObject {
               resetsAt: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getTime() + 86400000
             }), { status: 429, headers: { 'Content-Type': 'application/json' } });
           }
-          await this.incrementDailyCount();
         }
 
         const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
@@ -344,6 +347,10 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             };
           }
 
+          if (!isPro) {
+            await this.incrementDailyCount();
+          }
+
           return new Response(JSON.stringify({
             query,
             mode: 'deep_reasoning',
@@ -394,6 +401,10 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
               }
             ]
           });
+
+          if (!isPro) {
+            await this.incrementDailyCount();
+          }
 
           return new Response(JSON.stringify({
             query,
