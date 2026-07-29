@@ -241,21 +241,7 @@ export class InspectaLlamaDO implements DurableObject {
           ];
         }
 
-        // Optional non-blocking Browser Screenshot via Cloudflare Puppeteer
-        try {
-          if (this.env.MY_BROWSER) {
-            const browserPromise = puppeteer.launch(this.env.MY_BROWSER);
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 3000));
-            const browser = await Promise.race([browserPromise, timeoutPromise]) as any;
-            const page = await browser.newPage();
-            await page.goto(searchResults[0]?.url || 'https://duckduckgo.com', { waitUntil: 'domcontentloaded', timeout: 4000 });
-            const buf = await page.screenshot({ type: 'jpeg', quality: 40 });
-            screenshotBase64 = Buffer.from(buf).toString('base64');
-            await browser.close();
-          }
-        } catch (_) {
-          // Non-critical: continue seamlessly without screenshot
-        }
+        // Screenshot disabled to prevent Worker isolate hangs
 
         if (mode === 'deep_reasoning') {
           // Crawl top 3 target web pages in parallel using fast worker fetch
@@ -330,7 +316,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
   ]
 }`;
 
-          const aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+          const aiResponse = await this.env.AI.run('@cf/meta/llama-4-scout-17b-16e-instruct', {
             messages: [
               {
                 role: 'system',
@@ -384,7 +370,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           const contextText = searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
           const fullPrompt = `User Query: "${query}"\n\nSearch Snippets:\n${contextText}`;
 
-          const aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+          const aiResponse = await this.env.AI.run('@cf/meta/llama-4-scout-17b-16e-instruct', {
             messages: [
               {
                 role: 'system',
