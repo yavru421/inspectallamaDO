@@ -455,6 +455,7 @@
             else if ((int)response.StatusCode == 429)
             {
                 rateLimitHit = true;
+                errorMessage = "Daily free search limit reached (100/100). Upgrade to Pro for unlimited searches.";
                 await RefreshUserStatus();
             }
             else

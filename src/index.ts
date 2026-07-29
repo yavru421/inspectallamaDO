@@ -11,7 +11,7 @@ export interface Env {
   ASSETS?: Fetcher;
 }
 
-const FREE_DAILY_LIMIT = 5;
+const FREE_DAILY_LIMIT = 100;
 
 export class InspectaLlamaDO implements DurableObject {
   state: DurableObjectState;
@@ -46,7 +46,7 @@ export class InspectaLlamaDO implements DurableObject {
   // Resolve subscription tier from KV cache → D1 fallback
   private async resolveTier(userId: string): Promise<string> {
     const lowerUser = (userId || '').toLowerCase();
-    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser === 'johndondlinger21@gmail.com') {
+    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'johndondlinger21@gmail.com' || lowerUser === 'anonymous_user') {
       return 'pro';
     }
     try {
