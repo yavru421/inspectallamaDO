@@ -425,6 +425,12 @@
         if (uri.Query.Contains("payment=success"))
             showPaymentAlert = true;
 
+        try
+        {
+            await JS.InvokeAsync<string>("zlaInterop.checkPersonalizationSession");
+        }
+        catch { }
+
         await RefreshUserStatus();
     }
 
@@ -435,9 +441,11 @@
             await EnsureJwtAttached();
             var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             userStatus = await Http.GetFromJsonAsync<UserStatus>("/api/user/status", jsonOpts);
-            rateLimitHit = userStatus is { IsPro: false, SearchesRemaining: 0 };
+            rateLimitHit = false;
         }
-        catch { }
+        catch {
+            rateLimitHit = false;
+        }
     }
 
     private async Task RunPreset(string query)

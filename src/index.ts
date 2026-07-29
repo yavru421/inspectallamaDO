@@ -68,10 +68,16 @@ export class InspectaLlamaDO implements DurableObject {
 
   private async deductCredits(userId: string, costCents: number): Promise<boolean> {
     const lowerUser = (userId || '').toLowerCase();
-    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'anonymous_user') {
-      return true; // unlimited
+    if (
+      lowerUser.includes('johndondlinger21@gmail.com') ||
+      lowerUser.includes('dondlinger') ||
+      lowerUser.includes('anonymous') ||
+      lowerUser.startsWith('cl_') ||
+      lowerUser.startsWith('usr_')
+    ) {
+      return true; // unlimited for portal & guest edge router sessions
     }
-    if (!this.env.DB) return false;
+    if (!this.env.DB) return true;
     try {
       const res = await this.env.DB.prepare(
         'UPDATE users SET credit_balance_cents = credit_balance_cents - ? WHERE id = ? AND credit_balance_cents >= ? RETURNING credit_balance_cents'
@@ -87,13 +93,20 @@ export class InspectaLlamaDO implements DurableObject {
     } catch (e) {
       console.log('Error deducting credits', e);
     }
-    return false;
+    // Fallback: allow request so users are never hard-blocked by D1 record absence
+    return true;
   }
 
   // Resolve subscription tier and balance from D1
   private async resolveTierAndBalance(userId: string): Promise<{tier: string, balance: number}> {
     const lowerUser = (userId || '').toLowerCase();
-    if (lowerUser.includes('johndondlinger21@gmail.com') || lowerUser.includes('dondlinger') || lowerUser === 'anonymous_user') {
+    if (
+      lowerUser.includes('johndondlinger21@gmail.com') ||
+      lowerUser.includes('dondlinger') ||
+      lowerUser.includes('anonymous') ||
+      lowerUser.startsWith('cl_') ||
+      lowerUser.startsWith('usr_')
+    ) {
       return { tier: 'pro', balance: 999999 };
     }
     try {
@@ -102,13 +115,13 @@ export class InspectaLlamaDO implements DurableObject {
           'SELECT subscription_tier, credit_balance_cents FROM users WHERE id = ?'
         ).bind(userId).first();
         if (row) {
-          return { tier: row.subscription_tier as string, balance: row.credit_balance_cents as number };
+          return { tier: row.subscription_tier as string, balance: (row.credit_balance_cents as number) || 999999 };
         }
       }
     } catch (e) {
       console.log('Error resolving tier', e);
     }
-    return { tier: 'free', balance: 0 };
+    return { tier: 'pro', balance: 999999 };
   }
 
   async fetch(request: Request): Promise<Response> {
