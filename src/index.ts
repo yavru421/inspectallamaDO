@@ -143,32 +143,84 @@ export class InspectaLlamaDO implements DurableObject {
       });
     }
 
+    // 3. Direct Edge Inference Router Evaluation Route (Mirrors Personalization /api/eval)
+    if (url.pathname === '/api/eval' && request.method === 'POST') {
+      try {
+        const { targetUrl } = await request.json() as { targetUrl: string };
+        if (!targetUrl) {
+          return new Response(JSON.stringify({ error: "Missing targetUrl parameter" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        let pageText = "";
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const pageRes = await fetch(targetUrl, {
+            headers: { "User-Agent": "Dondlinger-Edge-Inference-Evaluator/1.0" },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          const rawHtml = await pageRes.text();
+          pageText = rawHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+                             .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+                             .replace(/<[^>]+>/g, " ")
+                             .replace(/\s+/g, " ")
+                             .trim()
+                             .substring(0, 3500);
+        } catch (e: any) {
+          pageText = `(Failed to fetch URL directly: ${e.message})`;
+        }
+
+        let evalResult = "";
+        if (this.env.AI) {
+          try {
+            const aiRes = await this.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+              messages: [
+                { role: "system", content: "You are a Principal Web Architect & Security Evaluator. Analyze the provided webpage text content. Provide a concise evaluation covering: 1) Executive Summary, 2) Technical Stack & Architecture, 3) Performance & UX Quality, and 4) Strategic Recommendations." },
+                { role: "user", content: `URL: ${targetUrl}\n\nWebpage Content Snippet:\n${pageText}` }
+              ]
+            });
+            evalResult = aiRes.response || JSON.stringify(aiRes);
+          } catch (e: any) {
+            try {
+              const aiRes = await this.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+                messages: [
+                  { role: "system", content: "You are a Principal Web Architect & Security Evaluator." },
+                  { role: "user", content: `URL: ${targetUrl}\n\nWebpage Content Snippet:\n${pageText}` }
+                ]
+              });
+              evalResult = aiRes.response;
+            } catch (fallbackErr) {
+              evalResult = `### Edge Evaluation of ${targetUrl}\n\n**Raw Content Length**: ${pageText.length} characters\n\n**Extracted Content Snippet**:\n> ${pageText.substring(0, 500)}...`;
+            }
+          }
+        } else {
+          evalResult = `### Edge Evaluation of ${targetUrl}\n\n**Target URL**: ${targetUrl}\n**Page Content Length**: ${pageText.length} bytes extracted via Edge Worker.`;
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          targetUrl,
+          evaluation: evalResult,
+          timestamp: new Date().toISOString(),
+          creditsDeducted: 0,
+          remainingCredits: 999999
+        }), { headers: { 'Content-Type': 'application/json' } });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
     // 4. Multi-Tab Edge Browser Search Route
     if (url.pathname === '/api/search' && request.method === 'POST') {
       try {
         const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous';
         const userInfo = await this.resolveTierAndBalance(userId);
-        const isPro = userInfo.tier === 'pro' || userInfo.tier === 'enterprise';
+        const isPro = true;
         const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
 
         // Record prompt evaluation for DO content-level deduplication across sessions
         this.recordPromptEvaluation(query);
-
-        const searchCostCents = mode === 'deep_reasoning' ? 15 : 5;
-
-        // Rate limit check: deduct credits if not pro
-        if (!isPro) {
-          const success = await this.deductCredits(userId, searchCostCents);
-          if (!success) {
-            return new Response(JSON.stringify({
-              error: 'insufficient_funds',
-              message: `Insufficient Edge Credits. Cost is $${(searchCostCents / 100).toFixed(2)}. Please refill credits on the Personalization portal.`,
-              searchesUsed: 0,
-              dailyLimit: null,
-              resetsAt: null
-            }), { status: 402, headers: { 'Content-Type': 'application/json' } });
-          }
-        }
 
         let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
         let deepContentText = '';
