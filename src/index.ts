@@ -17,11 +17,53 @@ export class InspectaLlamaDO implements DurableObject {
   state: DurableObjectState;
   env: Env;
   sessions: Set<WebSocket>;
+  activeInspectors: Map<string, number> = new Map();
+  lastInspectedPrompts: string[] = [];
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
     this.sessions = new Set<WebSocket>();
+    
+    // Load persisted lastInspectedPrompts string array from DO storage
+    this.state.blockConcurrencyWhile(async () => {
+      const storedPrompts = await this.state.storage.get<string[]>('lastInspectedPrompts');
+      if (storedPrompts) {
+        this.lastInspectedPrompts = storedPrompts;
+      }
+    });
+  }
+
+  private recordPromptEvaluation(prompt: string) {
+    const normalized = prompt.trim().toLowerCase();
+    if (!normalized) return;
+    
+    // Filter out previous occurrence if present, append to front
+    this.lastInspectedPrompts = [normalized, ...this.lastInspectedPrompts.filter(p => p !== normalized)].slice(0, 200);
+    
+    // Persist to DO storage non-blockingly
+    this.state.storage.put('lastInspectedPrompts', this.lastInspectedPrompts).catch(err => {
+      console.log('Error persisting lastInspectedPrompts:', err);
+    });
+  }
+
+  private isPromptRecentlyEvaluated(prompt: string): boolean {
+    const normalized = prompt.trim().toLowerCase();
+    return this.lastInspectedPrompts.includes(normalized);
+  }
+
+  private updatePresence(clientId?: string | null): number {
+    const now = Date.now();
+    if (clientId) {
+      this.activeInspectors.set(clientId, now);
+    }
+    // Prune sessions older than 10 seconds (10000 ms)
+    for (const [id, lastTime] of this.activeInspectors.entries()) {
+      if (now - lastTime > 10000) {
+        this.activeInspectors.delete(id);
+      }
+    }
+    return Math.max(1, this.activeInspectors.size, this.ctx.getWebSockets().length);
   }
 
   private async deductCredits(userId: string, costCents: number): Promise<boolean> {
@@ -72,6 +114,10 @@ export class InspectaLlamaDO implements DurableObject {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
+    // Track active HTTP session presence via clientId sliding window
+    const clientId = url.searchParams.get('clientId');
+    const activeCount = this.updatePresence(clientId);
+
     // WebSocket Upgrade for Real-Time Streaming UI
     if (request.headers.get('Upgrade') === 'websocket') {
       const pair = new WebSocketPair();
@@ -95,11 +141,41 @@ export class InspectaLlamaDO implements DurableObject {
         isPro,
         searchesUsed: 0,
         searchesRemaining: isPro ? null : Math.floor(userInfo.balance / 5),
-        dailyLimit: null
+        dailyLimit: null,
+        activeCount
       }), { headers: { 'Content-Type': 'application/json' } });
     }
 
+    // 2. Live Telemetry & Durable Object Presence Route
+    if (url.pathname === '/api/inspect/live') {
+      let recentUniquePrompts: any[] = [];
+      if (this.env.DB) {
+        try {
+          const { results } = await this.env.DB.prepare(
+            'SELECT prompt_text, COUNT(*) as query_count FROM inspections GROUP BY LOWER(TRIM(prompt_text)) ORDER BY RANDOM() LIMIT 50'
+          ).all();
+          recentUniquePrompts = results || [];
+        } catch (e) {
+          // If D1 table is not created yet, fall back to in-memory prompt history
+          recentUniquePrompts = this.lastInspectedPrompts.map(p => ({ prompt_text: p, query_count: 1 }));
+        }
+      } else {
+        recentUniquePrompts = this.lastInspectedPrompts.map(p => ({ prompt_text: p, query_count: 1 }));
+      }
 
+      return new Response(JSON.stringify({
+        status: 'online',
+        activeCount,
+        recentUniquePrompts,
+        cachedEvaluationsCount: this.lastInspectedPrompts.length,
+        timestamp: new Date().toISOString()
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+        }
+      });
+    }
 
     // 4. Multi-Tab Edge Browser Search Route
     if (url.pathname === '/api/search' && request.method === 'POST') {
@@ -108,6 +184,9 @@ export class InspectaLlamaDO implements DurableObject {
         const userInfo = await this.resolveTierAndBalance(userId);
         const isPro = userInfo.tier === 'pro' || userInfo.tier === 'enterprise';
         const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
+
+        // Record prompt evaluation for DO content-level deduplication across sessions
+        this.recordPromptEvaluation(query);
 
         const searchCostCents = mode === 'deep_reasoning' ? 15 : 5;
 
@@ -409,10 +488,14 @@ export default {
       
       const response = await obj.fetch(request);
       
-      // Inject CORS headers into DO response
+      // Inject CORS headers and Anti-Caching Headers for /api/inspect/live into DO response
       const newHeaders = new Headers(response.headers);
       Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
       
+      if (url.pathname === '/api/inspect/live') {
+        newHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      }
+
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -431,3 +514,4 @@ export default {
     });
   }
 };
+

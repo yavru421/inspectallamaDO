@@ -76,3 +76,40 @@ Telemetry MUST always perform semantic/linguistic extraction to visualize:
 4. Philosophical & Technical Milestones (e.g., Codex manifestos and breakthroughs).
 </RULE[AGENTS.md]>
 
+<RULE[AGENTS.md]>
+**Concrete Deliverables & Project Telemetry Invariant:**
+Whenever summarizing or visualizing telemetry via `/remember_recent` or `/telemetry`, NEVER output abstract keyword-frequency line charts or word counts.
+Telemetry MUST ALWAYS query disk modification timestamps (c:\dev\) and active DuckDB solution records to display:
+1. Real Project Modification Timestamps (Exact date, time, and target files).
+2. Live Edge & Cloudflare Infrastructure (Pages, Workers, D1 DBs, Durable Objects).
+3. Concrete Code Features & Solves Completed.
+</RULE[AGENTS.md]>
+
+
+
+<RULE[AGENTS.md]>
+**Operator Identity & Product Vision Invariant:**
+John Dondlinger is an advanced Edge Architect building globally scalable consumer SaaS, AI platforms, and MMOs (e.g., InspectaLlama, Heckler) using Zero-Liability Architecture (ZLA), Cloudflare Workers, Durable Objects, D1, and Blazor WASM.
+
+1. NEVER treat his projects as generic local web-dev agency builds or B2B brochure sites for small businesses.
+2. When explicitly asked about monetization, pricing, or career trajectory, focus EXCLUSIVELY on high-leverage outcomes: 
+   - Solo Founder SaaS models (Stripe subscriptions, premium consumer micro-transactions).
+   - Top-tier remote Edge Architect/Senior Engineer roles.
+3. NEVER propose pitching his advanced edge software as standard agency retainers to local brick-and-mortar businesses unless he explicitly requests a B2B agency workflow.
+</RULE[AGENTS.md]>
+
+
+<RULE[AGENTS.md]>
+**OrchestratorDO / `>>` Shorthand Dispatch (MCP Migration):**
+When the user types `>> [prompt]` or requests to evaluate something on the Edge, the agent MUST use the `call_mcp_tool` with ServerName: `orchestrator-do-mcp-server` and ToolName: `orchestrator_chat`. 
+Do NOT use the legacy `orchestrator-do-dispatcher` subagent or raw PowerShell scripts. The native MCP server automatically handles DPAPI auth and anti-fluff guardrails with zero UI friction.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Durable Object Broadcast & Mobile HTTP Cache-Busting Invariant:**
+When building live broadcast or real-time state APIs on Cloudflare Workers and Durable Objects:
+1. **Mobile HTTP Cache-Busting**: ALL polling GET endpoints (e.g. `/api/stage/live`) MUST set strict anti-caching headers (`Cache-Control: no-store, no-cache, must-revalidate, max-age=0`) AND append a client-side timestamp parameter (`?_t=Date.now()`) to prevent mobile browsers (Safari/Chrome) from serving stale cached responses.
+2. **Text-Level Deduplication**: DO state history MUST track normalized content strings (e.g., `LOWER(TRIM(text))`), not just entity UUID `id`s. SQL queries selecting fallback sets MUST use `GROUP BY LOWER(TRIM(text))` to prevent duplicate seed rows from re-playing.
+3. **HTTP Heartbeat Listener Tracking**: For platforms supporting non-WebSocket HTTP clients, track active listener sessions via a `clientId` parameter mapped to sliding timestamp heartbeats in DO memory rather than relying solely on `this.ctx.getWebSockets().length`.
+</RULE[AGENTS.md]>
+

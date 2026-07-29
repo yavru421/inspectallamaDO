@@ -211,6 +211,23 @@ window.zlaInterop = {
         URL.revokeObjectURL(url);
     },
 
+    // ── Unique Session Client GUID & Cache-Busted Live Polling ──
+    getClientId: function () {
+        let clientId = sessionStorage.getItem('inspecta_client_id');
+        if (!clientId) {
+            clientId = 'cl_' + (Math.random().toString(36).substring(2, 11) + Date.now().toString(36));
+            sessionStorage.setItem('inspecta_client_id', clientId);
+        }
+        return clientId;
+    },
+
+    getLivePollUrl: function (baseEndpoint) {
+        const clientId = this.getClientId();
+        const timestamp = Date.now();
+        const sep = baseEndpoint.includes('?') ? '&' : '?';
+        return `${baseEndpoint}${sep}clientId=${encodeURIComponent(clientId)}&_t=${timestamp}`;
+    },
+
     generateExecutivePdf: function (reportDataJson) {
         let data = {};
         try {
