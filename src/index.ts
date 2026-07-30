@@ -17,6 +17,8 @@ export class InspectaLlamaDO extends DurableObject {
   sessions: Set<WebSocket>;
   activeInspectors: Map<string, number> = new Map();
   lastInspectedPrompts: string[] = [];
+  evalCache: Map<string, { data: any; expiresAt: number }> = new Map();
+  activeJobs: Set<string> = new Set();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -64,14 +66,36 @@ export class InspectaLlamaDO extends DurableObject {
   }
 
   private async deductCredits(userId: string, costCents: number): Promise<boolean> {
-    // Unconditionally grant heavy usage access to ALL accounts with ZERO overage risk on Cloudflare Workers AI free tier
-    return true;
+    if (!this.env.DB) return true;
+    try {
+      const user = await this.env.DB.prepare('SELECT credit_balance_cents, subscription_tier FROM users WHERE id = ?').bind(userId).first();
+      if (!user) return false;
+      if (user.subscription_tier === 'pro' || user.subscription_tier === 'enterprise') return true;
+      const balance = (user.credit_balance_cents as number) || 0;
+      if (balance < costCents) return false;
+      const newBalance = balance - costCents;
+      await this.env.DB.prepare('UPDATE users SET credit_balance_cents = ? WHERE id = ?').bind(newBalance, userId).run();
+      return true;
+    } catch (e) {
+      console.error('Error deducting credits:', e);
+      return false;
+    }
   }
 
-  // Resolve subscription tier and balance for all users
+  // Resolve subscription tier and balance for authenticated user from D1 DB
   private async resolveTierAndBalance(userId: string): Promise<{tier: string, balance: number}> {
-    // Unconditionally treat EVERY user as Pro with unlimited balance
-    return { tier: 'pro', balance: 999999 };
+    if (!this.env.DB) return { tier: 'free', balance: 0 };
+    try {
+      const user = await this.env.DB.prepare('SELECT credit_balance_cents, subscription_tier FROM users WHERE id = ?').bind(userId).first();
+      if (!user) return { tier: 'free', balance: 0 };
+      return {
+        tier: (user.subscription_tier as string) || 'free',
+        balance: (user.credit_balance_cents as number) || 0
+      };
+    } catch (e) {
+      console.error('Error resolving tier and balance:', e);
+      return { tier: 'free', balance: 0 };
+    }
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -148,12 +172,35 @@ export class InspectaLlamaDO extends DurableObject {
           return new Response(JSON.stringify({ error: "Missing targetUrl parameter" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
+        const cacheKey = targetUrl.trim().toLowerCase();
+        const now = Date.now();
+        const cached = this.evalCache.get(cacheKey);
+
+        // 1. Zero-Cost Cache Hit: Return cached evaluation if requested within 15 mins (900,000 ms)
+        if (cached && cached.expiresAt > now) {
+          return new Response(JSON.stringify({
+            success: true,
+            targetUrl,
+            evaluation: cached.data,
+            timestamp: new Date().toISOString(),
+            cached: true,
+            creditsDeducted: 0
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // 2. Concurrency Lock: Prevent parallel token burn for identical target URLs
+        if (this.activeJobs.has(cacheKey)) {
+          return new Response(JSON.stringify({ error: "Evaluation in progress for this URL. Please wait a moment." }), { status: 429, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        this.activeJobs.add(cacheKey);
+
         let pageText = "";
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 4000);
           const pageRes = await fetch(targetUrl, {
-            headers: { "User-Agent": "Dondlinger-Edge-Inference-Evaluator/1.0" },
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" },
             signal: controller.signal
           });
           clearTimeout(timeoutId);
@@ -195,13 +242,16 @@ export class InspectaLlamaDO extends DurableObject {
           evalResult = `### Edge Evaluation of ${targetUrl}\n\n**Target URL**: ${targetUrl}\n**Page Content Length**: ${pageText.length} bytes extracted via Edge Worker.`;
         }
 
+        // Cache evaluation for 15 minutes to save Neurons
+        this.evalCache.set(cacheKey, { data: evalResult, expiresAt: now + 900000 });
+        this.activeJobs.delete(cacheKey);
+
         return new Response(JSON.stringify({
           success: true,
           targetUrl,
           evaluation: evalResult,
           timestamp: new Date().toISOString(),
-          creditsDeducted: 0,
-          remainingCredits: 999999
+          creditsDeducted: 0
         }), { headers: { 'Content-Type': 'application/json' } });
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
@@ -213,7 +263,10 @@ export class InspectaLlamaDO extends DurableObject {
       try {
         const userId = request.headers.get('x-user-id') || request.headers.get('cf-connecting-ip') || 'anonymous';
         const userInfo = await this.resolveTierAndBalance(userId);
-        const isPro = true;
+        const isPro = userInfo.tier === 'pro' || userInfo.tier === 'enterprise';
+        if (!isPro && userInfo.balance <= 0) {
+          return new Response(JSON.stringify({ error: "Insufficient credits. Please upgrade or refill credits on the Personalization Portal." }), { status: 402, headers: { 'Content-Type': 'application/json' } });
+        }
         const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
 
         // Record prompt evaluation for DO content-level deduplication across sessions
@@ -223,15 +276,33 @@ export class InspectaLlamaDO extends DurableObject {
         let deepContentText = '';
         let screenshotBase64 = '';
 
-        // Helper: Fast direct fetch for DuckDuckGo web search via API & HTML parsing
+        // Helper: Multi-Engine Web Search (DuckDuckGo + Wikipedia API fallback)
         const getSearchResults = async (q: string) => {
           const results: Array<{ title: string; url: string; snippet: string }> = [];
+          
+          // Engine 1: Wikipedia API Search
           try {
-            // Attempt 1: DuckDuckGo Instant Answer JSON API
+            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&utf8=&format=json`;
+            const wikiRes = await fetch(wikiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const wikiData = await wikiRes.json() as any;
+            if (wikiData?.query?.search && Array.isArray(wikiData.query.search)) {
+              for (const item of wikiData.query.search.slice(0, 4)) {
+                const snippetText = item.snippet.replace(/<[^>]+>/g, '').trim();
+                results.push({
+                  title: item.title,
+                  url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                  snippet: snippetText
+                });
+              }
+            }
+          } catch (_) {}
+
+          // Engine 2: DuckDuckGo Instant Answer API
+          try {
             const jsonUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`;
             const jsonRes = await fetch(jsonUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
             const jsonData = await jsonRes.json() as any;
-            if (jsonData.RelatedTopics && Array.isArray(jsonData.RelatedTopics)) {
+            if (jsonData?.RelatedTopics && Array.isArray(jsonData.RelatedTopics)) {
               for (const topic of jsonData.RelatedTopics) {
                 if (topic.FirstURL && topic.Text && results.length < 6) {
                   results.push({
@@ -244,56 +315,20 @@ export class InspectaLlamaDO extends DurableObject {
             }
           } catch (_) {}
 
-          if (results.length > 0) return results;
-
-          try {
-            // Attempt 2: HTML Scrape fallback
-            const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
-            const res = await fetch(searchUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-              }
-            });
-            const html = await res.text();
-            
-            // Extract links & snippets using lenient regexes
-            const titleMatches = Array.from(html.matchAll(/<a[^>]+class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi));
-            const snippetMatches = Array.from(html.matchAll(/<(?:a|div)[^>]+class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/(?:a|div)>/gi));
-
-            for (let i = 0; i < Math.min(titleMatches.length, 6); i++) {
-              let rawUrl = titleMatches[i][1];
-              if (rawUrl.includes('uddg=')) {
-                try {
-                  const u = new URL('https://duckduckgo.com' + rawUrl);
-                  rawUrl = u.searchParams.get('uddg') || rawUrl;
-                } catch (_) {}
-              }
-              const title = titleMatches[i][2].replace(/<[^>]+>/g, '').trim();
-              const snippet = snippetMatches[i] ? snippetMatches[i][1].replace(/<[^>]+>/g, '').trim() : title;
-              if (title && rawUrl.startsWith('http')) {
-                results.push({ title, url: rawUrl, snippet });
-              }
-            }
-          } catch (_) {}
-
           return results;
         };
 
         searchResults = await getSearchResults(query);
 
-        // Fallback if regex parsing returned empty
         if (searchResults.length === 0) {
           searchResults = [
             {
-              title: `Search: ${query}`,
-              url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-              snippet: `Live research synthesis generated directly for query: "${query}".`
+              title: `Research Topic: ${query}`,
+              url: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`,
+              snippet: `Comprehensive AI synthesis on "${query}".`
             }
           ];
         }
-
-        // Screenshot disabled to prevent Worker isolate hangs
 
         if (mode === 'deep_reasoning') {
           // Crawl top 3 target web pages in parallel using fast worker fetch
@@ -305,7 +340,7 @@ export class InspectaLlamaDO extends DurableObject {
                   const controller = new AbortController();
                   const timeoutId = setTimeout(() => controller.abort(), 3000);
                   const res = await fetch(target.url, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' },
                     signal: controller.signal
                   });
                   clearTimeout(timeoutId);
@@ -324,50 +359,25 @@ export class InspectaLlamaDO extends DurableObject {
             deepContentText = pageContents.join('\n\n');
           }
 
-          // ── Step 3: Dialectical & Epistemic Synthesis Engine via Llama 3.3 70B ──
+          // ── Step 3: Synthesis Engine via Llama 3.3 70B ──
           const fullPrompt = `USER OBJECTIVE: "${query}"
 
-PRIMARY SEARCH RESULTS:
+PRIMARY SEARCH SOURCES:
 ${searchResults.map(r => `• ${r.title} (${r.url}): ${r.snippet}`).join('\n')}
 
-DEEP SCRAPED PAGE EXTRACTS:
+DEEP SCRAPED EXTRACTS:
 ${deepContentText}
 
-SYSTEM INSTRUCTIONS:
-You are InspectaLlama, a world-class Edge AI Research Engine. Conduct an exhaustive, highly detailed cognitive research synthesis for the user query.
+INSTRUCTIONS:
+You are InspectaLlama, a world-class Edge AI Research Engine. Synthesize an exhaustive, publication-grade markdown research report for "${query}". Break down the topic into structured sections (Executive Summary, Core Architecture/Mechanics, Critical Analysis).
 
-You must output ONLY a valid JSON object matching this exact schema:
+Output ONLY valid JSON matching this schema:
 {
-  "executiveSummary": "Write a multi-paragraph, publication-grade research report in rich markdown format. Break down the topic into structured sections (e.g. ## Core Overview, ## Detailed Step-by-Step / Architectural Breakdown, ## Critical Trade-offs & Recommendations). Provide exhaustive depth, precise technical/procedural details, and actionable guidance rather than a short 2-sentence summary.",
-  "reasoningTrace": [
-    {"step": 1, "description": "Vector query planning and domain entity identification"},
-    {"step": 2, "description": "Deep text extraction across scraped web page DOM targets"},
-    {"step": 3, "description": "Dialectical claim verification and confidence scoring"}
-  ],
-  "claims": [
-    {
-      "statement": "Specific verified factual claim statement",
-      "verbatimQuote": "Direct quote from source backing this claim",
-      "sourceTitle": "Source title",
-      "sourceUrl": "Source URL",
-      "epistemicStatus": "Fact | Disputed | Marketing",
-      "confidenceScore": 95
-    }
-  ],
-  "entities": [
-    {
-      "name": "Entity Name",
-      "category": "Technology | Concept | Person | Method",
-      "description": "Exhaustive explanation of role, importance, and mechanics"
-    }
-  ],
-  "disputes": [
-    {
-      "topic": "Topic of trade-off or debate",
-      "perspectiveA": "Pros / Argument A / Advantage",
-      "perspectiveB": "Cons / Argument B / Disadvantage"
-    }
-  ]
+  "executiveSummary": "# Research Synthesis: ${query}\\n\\nWrite an exhaustive, multi-paragraph markdown report with rich headers, detailed explanations, and technical depth.",
+  "reasoningTrace": [{"step": 1, "description": "Information retrieval and claim verification"}],
+  "claims": [{"statement": "Verified claim", "verbatimQuote": "Direct quote", "sourceTitle": "${searchResults[0]?.title || 'Source'}", "sourceUrl": "${searchResults[0]?.url || 'URL'}", "epistemicStatus": "Fact", "confidenceScore": 95}],
+  "entities": [{"name": "${query}", "category": "Concept", "description": "Primary research objective"}],
+  "disputes": [{"topic": "Key trade-off", "perspectiveA": "Advantage", "perspectiveB": "Limitation"}]
 }`;
 
           let aiResponse: any = null;
@@ -420,6 +430,13 @@ You must output ONLY a valid JSON object matching this exact schema:
               cleanJsonStr = cleanJsonStr.substring(firstBrace, lastBrace + 1);
             }
             parsedCognitiveData = JSON.parse(cleanJsonStr);
+
+            // If the model output double-stringified JSON inside executiveSummary, unwrap it
+            if (typeof parsedCognitiveData === 'string') {
+              try {
+                parsedCognitiveData = JSON.parse(parsedCognitiveData);
+              } catch (_) {}
+            }
           } catch (e) {
             parsedCognitiveData = {
               executiveSummary: typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.',
@@ -443,10 +460,10 @@ You must output ONLY a valid JSON object matching this exact schema:
             query,
             mode: 'deep_reasoning',
             synthesis: summaryText,
-            reasoningTrace: parsedCognitiveData.reasoningTrace || [],
-            claims: parsedCognitiveData.claims || [],
-            entities: parsedCognitiveData.entities || [],
-            disputes: parsedCognitiveData.disputes || [],
+            reasoningTrace: Array.isArray(parsedCognitiveData.reasoningTrace) ? parsedCognitiveData.reasoningTrace : [{ step: 1, description: "Cognitive reasoning completed." }],
+            claims: Array.isArray(parsedCognitiveData.claims) ? parsedCognitiveData.claims : [],
+            entities: Array.isArray(parsedCognitiveData.entities) ? parsedCognitiveData.entities : [],
+            disputes: Array.isArray(parsedCognitiveData.disputes) ? parsedCognitiveData.disputes : [],
             sources: searchResults,
             screenshotBase64,
             timestamp: new Date().toISOString()

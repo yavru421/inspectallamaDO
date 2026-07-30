@@ -64,73 +64,127 @@
         Autonomous web graph traversal, dialectical claim verification, verbatim source audits, and publication-ready PDF intelligence briefs.
     </p>
 
-    @* ── Search Input Form ── *@
-    <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl flex flex-col gap-3">
-        <div class="flex items-center gap-2">
-            <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
-                   placeholder="Ask any complex research question (e.g., 'Durable Objects vs Redis performance and trade-offs')..."
-                   disabled="@(isLoading || rateLimitHit)"
-                   class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed" />
-            <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
-                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2 shrink-0">
-                @if (isLoading)
-                {
-                    <span class="animate-spin text-sm">🔄</span>
-                    <span>Reasoning...</span>
-                }
-                else
-                {
-                    <span>Inspect 🦙</span>
-                }
-            </button>
-        </div>
+    @* ── Main Workbench View Switcher ── *@
+    <div class="mb-4 flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 text-xs font-bold">
+        <button @onclick='() => mainTab = "search"' class="px-4 py-2 rounded-lg transition border @(mainTab == "search" ? "bg-indigo-600 text-white border-indigo-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+            🧠 Deep Cognitive Research
+        </button>
+        <button @onclick='() => mainTab = "scraper"' class="px-4 py-2 rounded-lg transition border @(mainTab == "scraper" ? "bg-cyan-600 text-white border-cyan-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+            ⚡ Direct URL Inference Scraper
+        </button>
+    </div>
 
-        @* ── Mode Selection & Options ── *@
-        <div class="flex flex-wrap items-center justify-between gap-3 px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
+    @if (mainTab == "search")
+    {
+        @* ── Search Input Form ── *@
+        <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl flex flex-col gap-3">
             <div class="flex items-center gap-2">
-                <span class="text-slate-500 font-medium">Research Engine Mode:</span>
-                <button @onclick='() => selectedMode = "deep_reasoning"'
-                        class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
-                    🧠 Deep Cognitive Multi-Hop
-                </button>
-                <button @onclick='() => selectedMode = "standard"'
-                        class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
-                    ⚡ Instant Synthesis
-                </button>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
-                    <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
-                    <span>Deep Multi-Tab Scraping</span>
-                </label>
-
-                @if (userStatus != null)
-                {
-                    @if (userStatus.IsPro)
+                <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
+                       placeholder="Ask any complex research question (e.g., 'Durable Objects vs Redis performance and trade-offs')..."
+                       disabled="@(isLoading || rateLimitHit)"
+                       class="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed" />
+                <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
+                        class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2 shrink-0">
+                    @if (isLoading)
                     {
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold">
-                            ✦ Pro Pass
-                        </span>
+                        <span class="animate-spin text-sm">🔄</span>
+                        <span>Reasoning...</span>
                     }
                     else
                     {
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono">
-                            🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
-                        </span>
+                        <span>Inspect 🦙</span>
                     }
-                }
+                </button>
+            </div>
+
+            @* ── Mode Selection & Options ── *@
+            <div class="flex flex-wrap items-center justify-between gap-3 px-3 py-2 border-t border-slate-800/60 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 font-medium">Research Engine Mode:</span>
+                    <button @onclick='() => selectedMode = "deep_reasoning"'
+                            class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
+                        🧠 Deep Cognitive Multi-Hop
+                    </button>
+                    <button @onclick='() => selectedMode = "standard"'
+                            class="px-2.5 py-1 rounded-lg font-semibold transition border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
+                        ⚡ Instant Synthesis
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition">
+                        <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
+                        <span>Deep Multi-Tab Scraping</span>
+                    </label>
+
+                    @if (userStatus != null)
+                    {
+                        @if (userStatus.IsPro)
+                        {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold">
+                                ✦ Pro Pass
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono">
+                                🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
+                            </span>
+                        }
+                    }
+                </div>
             </div>
         </div>
-    </div>
 
-    @* ── Presets ── *@
-    <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
-        <span>Try Presets:</span>
-        <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket architecture & limits")' class="text-slate-400 hover:text-indigo-400 underline transition">Durable Objects</button> &bull;
-        <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM performance benchmarks")' class="text-slate-400 hover:text-indigo-400 underline transition">.NET 10 WASM</button> &bull;
-        <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
-    </div>
+        @* ── Presets ── *@
+        <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
+            <span>Try Presets:</span>
+            <button @onclick='() => RunPreset("Cloudflare Durable Objects WebSocket architecture & limits")' class="text-slate-400 hover:text-indigo-400 underline transition">Durable Objects</button> &bull;
+            <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM performance benchmarks")' class="text-slate-400 hover:text-indigo-400 underline transition">.NET 10 WASM</button> &bull;
+            <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
+        </div>
+    }
+    else
+    {
+        @* ── Direct URL Inference Scraper View ── *@
+        <div class="w-full max-w-3xl bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div>
+                    <span class="text-xs text-cyan-400 font-mono uppercase tracking-wide">Stateless Edge Scraper</span>
+                    <h3 class="text-lg font-bold text-white">Inspect Webpage URL Architecture</h3>
+                </div>
+                <span class="text-xs text-slate-500 font-mono">Llama 3.3 70B Edge</span>
+            </div>
+
+            <div class="flex items-center gap-2 mt-1">
+                <input @bind="evalTargetUrl" placeholder="https://example.com"
+                       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+                <button @onclick="RunUrlEvaluation" disabled="@isEvaluating"
+                        class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm flex items-center gap-2 shrink-0 disabled:opacity-50">
+                    @if (isEvaluating)
+                    {
+                        <span class="animate-spin text-sm">🔄</span>
+                        <span>Auditing...</span>
+                    }
+                    else
+                    {
+                        <span>Run Scraper ⚡</span>
+                    }
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(evalError))
+            {
+                <div class="text-xs font-mono text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">
+                    @evalError
+                </div>
+            }
+
+            <div class="mt-2 bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-xs font-mono text-cyan-200/90 whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed shadow-inner">
+                @(string.IsNullOrEmpty(evalResult) ? "Enter a target web URL above and click 'Run Scraper ⚡' to execute an automated architectural audit." : evalResult)
+            </div>
+        </div>
+    }
 </div>
 
 @* ── Search Results & Cognitive Workbench ── *@
@@ -448,6 +502,48 @@
         }
     }
 
+    private string mainTab = "search";
+    private string evalTargetUrl = "";
+    private string evalResult = "";
+    private string evalError = "";
+    private bool isEvaluating = false;
+
+    private async Task RunUrlEvaluation()
+    {
+        if (string.IsNullOrWhiteSpace(evalTargetUrl))
+        {
+            evalError = "Please enter a valid target URL.";
+            return;
+        }
+
+        isEvaluating = true;
+        evalError = "";
+        evalResult = "";
+
+        try
+        {
+            await EnsureJwtAttached();
+            var response = await Http.PostAsJsonAsync("/api/eval", new { targetUrl = evalTargetUrl });
+            if (response.IsSuccessStatusCode)
+            {
+                var data = await response.Content.ReadFromJsonAsync<EvalResponse>();
+                evalResult = data?.Evaluation ?? "Evaluation complete.";
+            }
+            else
+            {
+                evalError = $"Evaluation failed: HTTP {(int)response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            evalError = $"Network error: {ex.Message}";
+        }
+        finally
+        {
+            isEvaluating = false;
+        }
+    }
+
     private async Task RunPreset(string query)
     {
         searchQuery = query;
@@ -627,5 +723,14 @@
         public string Title { get; set; } = "";
         public string Url { get; set; } = "";
         public string Snippet { get; set; } = "";
+    }
+
+    public class EvalResponse
+    {
+        public bool Success { get; set; }
+        public string TargetUrl { get; set; } = "";
+        public string Evaluation { get; set; } = "";
+        public string Timestamp { get; set; } = "";
+        public bool Cached { get; set; }
     }
 }
