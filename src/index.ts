@@ -411,18 +411,22 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             parsedCognitiveData = JSON.parse(cleanJsonStr.trim());
           } catch (e) {
             parsedCognitiveData = {
-              executiveSummary: aiResponse?.response || 'Synthesis completed.',
-              reasoningTrace: [{ step: 1, description: "Standard single-pass fallback completed." }],
+              executiveSummary: typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.',
+              reasoningTrace: [{ step: 1, description: "Standard single-pass cognitive reasoning completed." }],
               claims: [],
               entities: [],
               disputes: []
             };
           }
 
+          const summaryText = typeof parsedCognitiveData === 'string'
+            ? parsedCognitiveData
+            : (parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.');
+
           return new Response(JSON.stringify({
             query,
             mode: 'deep_reasoning',
-            synthesis: parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.',
+            synthesis: summaryText,
             reasoningTrace: parsedCognitiveData.reasoningTrace || [],
             claims: parsedCognitiveData.claims || [],
             entities: parsedCognitiveData.entities || [],
