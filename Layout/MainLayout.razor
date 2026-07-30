@@ -3,45 +3,45 @@
 @inject IJSRuntime JS
 
 <div class="page flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans">
-    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <span class="text-2xl">🦙🔍</span>
-            <span class="font-extrabold text-xl tracking-tight text-white">Inspecta<span class="text-indigo-400">Llama</span></span>
-            <div class="do-power-badge" title="Stateless edge AI routing powered by Cloudflare Workers AI">
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-3">
+            <span class="text-xl sm:text-2xl">🦙🔍</span>
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white">Inspecta<span class="text-indigo-400">Llama</span></span>
+            <div class="do-power-badge text-[10px] sm:text-xs" title="Stateless edge AI routing powered by Cloudflare Workers AI">
                 <span class="do-bolt">⚡</span>
                 <span class="do-label">POWERED BY <strong class="do-highlight">CLOUDFLARE WORKERS AI</strong></span>
             </div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
             @if (userSession != null && userSession.IsAuthenticated)
             {
-                <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 text-white font-bold flex items-center justify-center text-xs">
+                <div class="flex items-center gap-2 sm:gap-3 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
+                    <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 text-white font-bold flex items-center justify-center text-[10px] sm:text-xs">
                         @(string.IsNullOrEmpty(userSession.Name) ? "D" : userSession.Name.Substring(0, 1).ToUpper())
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-semibold text-slate-200">@userSession.Name</span>
-                        <span class="text-[10px] text-slate-400">@userSession.Email</span>
+                        <span class="font-semibold text-slate-200 text-xs">@userSession.Name</span>
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 max-w-[100px] truncate">@userSession.Email</span>
                     </div>
                     
                     @if (isPro || userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise")
                     {
                         <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
-                           class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase hover:bg-emerald-500/30 transition">
-                            👑 Unlimited Pro
+                           class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase hover:bg-emerald-500/30 transition">
+                            👑 Pro
                         </a>
                     }
                     else
                     {
                         <a href="https://personalization.dondlingergc.com/credits" target="_blank"
-                           class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 font-mono transition">
-                            💳 @userSession.CreditBalance Credits
+                           class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 font-mono transition">
+                            💳 @userSession.CreditBalance
                         </a>
                     }
 
                     <button @onclick="() => showSettingsModal = true" title="Manage Account & Settings"
-                       class="ml-1 text-slate-400 hover:text-white transition flex items-center gap-1">
-                        ⚙️ Settings
+                       class="ml-1 text-slate-400 hover:text-white transition flex items-center gap-1 text-xs">
+                        ⚙️
                     </button>
                 </div>
             }
@@ -50,11 +50,11 @@
                 <div class="flex items-center gap-2">
                     <button @onclick="() => showSettingsModal = true" title="Settings"
                        class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
-                        ⚙️ Settings
+                        ⚙️ <span class="hidden sm:inline">Settings</span>
                     </button>
                     <a href="https://personalization.dondlingergc.com" target="_blank"
-                       class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-3 py-1.5 bg-indigo-500/10">
-                        🔑 Sign In (personalization.dondlingergc.com)
+                       class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-2.5 py-1.5 bg-indigo-500/10 whitespace-nowrap">
+                        🔑 Sign In
                     </a>
                 </div>
             }
@@ -63,14 +63,14 @@
             {
                 <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
                    class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5 hover:bg-emerald-500/30 transition">
-                    <span>👑</span> Inspecta Pro (Active)
+                    <span>👑</span> Pro
                 </a>
             }
             else
             {
                 <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
-                   class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-                    <span>Upgrade Pro / Manage Credits →</span>
+                   class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5 whitespace-nowrap">
+                    <span>Upgrade Pro →</span>
                 </a>
             }
         </div>
