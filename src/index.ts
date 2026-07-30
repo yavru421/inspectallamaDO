@@ -223,9 +223,31 @@ export class InspectaLlamaDO extends DurableObject {
         let deepContentText = '';
         let screenshotBase64 = '';
 
-        // Helper: Fast direct fetch for DuckDuckGo web search
+        // Helper: Fast direct fetch for DuckDuckGo web search via API & HTML parsing
         const getSearchResults = async (q: string) => {
+          const results: Array<{ title: string; url: string; snippet: string }> = [];
           try {
+            // Attempt 1: DuckDuckGo Instant Answer JSON API
+            const jsonUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`;
+            const jsonRes = await fetch(jsonUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const jsonData = await jsonRes.json() as any;
+            if (jsonData.RelatedTopics && Array.isArray(jsonData.RelatedTopics)) {
+              for (const topic of jsonData.RelatedTopics) {
+                if (topic.FirstURL && topic.Text && results.length < 6) {
+                  results.push({
+                    title: topic.Text.split(' - ')[0] || topic.Text.slice(0, 50),
+                    url: topic.FirstURL,
+                    snippet: topic.Text
+                  });
+                }
+              }
+            }
+          } catch (_) {}
+
+          if (results.length > 0) return results;
+
+          try {
+            // Attempt 2: HTML Scrape fallback
             const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
             const res = await fetch(searchUrl, {
               headers: {
@@ -234,27 +256,28 @@ export class InspectaLlamaDO extends DurableObject {
               }
             });
             const html = await res.text();
-            const results: Array<{ title: string; url: string; snippet: string }> = [];
-            const resultRegex = /<a class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
-            let m;
-            while ((m = resultRegex.exec(html)) !== null && results.length < 6) {
-              let rawUrl = m[1];
+            
+            // Extract links & snippets using lenient regexes
+            const titleMatches = Array.from(html.matchAll(/<a[^>]+class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi));
+            const snippetMatches = Array.from(html.matchAll(/<(?:a|div)[^>]+class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/(?:a|div)>/gi));
+
+            for (let i = 0; i < Math.min(titleMatches.length, 6); i++) {
+              let rawUrl = titleMatches[i][1];
               if (rawUrl.includes('uddg=')) {
                 try {
                   const u = new URL('https://duckduckgo.com' + rawUrl);
                   rawUrl = u.searchParams.get('uddg') || rawUrl;
                 } catch (_) {}
               }
-              const title = m[2].replace(/<[^>]+>/g, '').trim();
-              const snippet = m[3].replace(/<[^>]+>/g, '').trim();
+              const title = titleMatches[i][2].replace(/<[^>]+>/g, '').trim();
+              const snippet = snippetMatches[i] ? snippetMatches[i][1].replace(/<[^>]+>/g, '').trim() : title;
               if (title && rawUrl.startsWith('http')) {
                 results.push({ title, url: rawUrl, snippet });
               }
             }
-            return results;
-          } catch (e) {
-            return [];
-          }
+          } catch (_) {}
+
+          return results;
         };
 
         searchResults = await getSearchResults(query);
