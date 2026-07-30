@@ -462,7 +462,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
               messages: [
                 {
                   role: 'system',
-                  content: 'You are InspectaLlama, an elite AI search engine. Synthesize a concise, structured response.'
+                  content: 'You are InspectaLlama, an elite AI search engine. Synthesize a complete, structured response. Always conclude your final step or paragraph cleanly without cutting off mid-sentence.'
                 },
                 {
                   role: 'user',
