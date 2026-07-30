@@ -252,6 +252,10 @@
                     <span>⚡ Trade-offs &amp; Disputes</span>
                     <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Disputes.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Disputes.Count</span>
                 </button>
+                <button @onclick='() => activeTab = "grill"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "grill" ? "bg-gradient-to-r from-amber-500 to-indigo-600 text-white border-amber-400 shadow-md font-bold" : "bg-slate-950/60 text-amber-300 border-amber-500/30 hover:border-amber-400")">
+                    <span>🎯 Stepper (/grill-me)</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">@result.GrillNodes.Count</span>
+                </button>
             </div>
 
             @* Tab 1: Executive Synthesis *@
@@ -383,6 +387,78 @@
                                     <div class="text-slate-300 leading-relaxed">@dispute.PerspectiveB</div>
                                 </div>
                             </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Tab 5: /grill-me Interactive Stepper Nodes *@
+            @if (activeTab == "grill")
+            {
+                <div class="space-y-6">
+                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🎯</span>
+                            <div>
+                                <span class="font-bold">Interactive /grill-me Decision Nodes:</span>
+                                <span> The Llama 3.3 70B AI engine paused at key research branches. Select your preferred choices below to drive downstream edge synthesis.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (result.GrillNodes != null && result.GrillNodes.Any())
+                    {
+                        @foreach (var node in result.GrillNodes)
+                        {
+                            <div class="p-5 rounded-2xl bg-slate-950/80 border @(node.IsResolved ? "border-emerald-500/40" : "border-amber-500/40") shadow-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono @(node.IsResolved ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border border-amber-500/30")">
+                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Choice Resolved" : "⏳ Awaiting Analyst Input")
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(node.SelectedOption))
+                                    {
+                                        <span class="text-xs text-emerald-400 font-semibold truncate max-w-xs">Selected: @node.SelectedOption</span>
+                                    }
+                                </div>
+                                <h4 class="font-black text-white text-base mb-1">@node.Title</h4>
+                                <p class="text-sm text-slate-300 mb-4 leading-relaxed font-medium">@node.ContextQuestion</p>
+
+                                <div class="space-y-3">
+                                    @foreach (var opt in node.Options)
+                                    {
+                                        var isCurrentSelected = node.SelectedOption == opt.Text;
+                                        <div @onclick='() => SelectGrillOption(node, opt)'
+                                             class="p-3.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 @(isCurrentSelected ? "bg-indigo-600/20 border-indigo-500 text-white shadow-md" : opt.IsRecommended ? "bg-amber-500/10 border-amber-500/40 hover:border-amber-400 text-slate-200" : "bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300")">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center gap-2">
+                                                    @if (opt.IsRecommended)
+                                                    {
+                                                        <span class="px-2 py-0.5 rounded-md bg-amber-500/30 text-amber-300 font-bold text-[10px] uppercase tracking-wide border border-amber-400/40">★ Recommended</span>
+                                                    }
+                                                    <span class="font-bold text-sm">@opt.Text</span>
+                                                </div>
+                                                <p class="text-xs text-slate-400 leading-snug">@opt.Rationale</p>
+                                            </div>
+                                            <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 w-full sm:w-auto @(isCurrentSelected ? "bg-indigo-600 text-white" : "bg-slate-800 hover:bg-slate-700 text-slate-200")">
+                                                @(isCurrentSelected ? "✓ Selected" : "Select Branch →")
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="pt-4 border-t border-slate-800 flex justify-end">
+                            <button @onclick="ExecuteGrillDownstreamHop" disabled="@(isLoading || !result.GrillNodes.Any(n => n.IsResolved))"
+                                    class="bg-gradient-to-r from-amber-500 via-indigo-600 to-cyan-500 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition shadow-xl flex items-center gap-2 text-sm">
+                                <span>🚀 Execute Edge Hop with Selected Branches (@result.GrillNodes.Count(n => n.IsResolved))</span>
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8 text-slate-400 text-sm">
+                            No interactive decision nodes generated yet. Run a search in 🧠 <strong>Deep Cognitive Mode</strong> to generate /grill-me steps.
                         </div>
                     }
                 </div>
@@ -600,6 +676,59 @@
         }
     }
 
+    private void SelectGrillOption(InteractiveGrillNode node, GrillOption opt)
+    {
+        node.SelectedOption = opt.Text;
+        node.IsResolved = true;
+    }
+
+    private async Task ExecuteGrillDownstreamHop()
+    {
+        if (result == null || result.GrillNodes == null) return;
+        var selected = result.GrillNodes
+            .Where(n => n.IsResolved && !string.IsNullOrEmpty(n.SelectedOption))
+            .Select(n => new { question = n.ContextQuestion, answer = n.SelectedOption })
+            .ToList();
+
+        if (!selected.Any()) return;
+
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var payload = new
+            {
+                query = searchQuery,
+                deepCrawl = deepCrawl,
+                mode = selectedMode,
+                selectedAnswers = selected
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/search", payload);
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
+                activeTab = "synthesis";
+                await RefreshUserStatus();
+            }
+            else
+            {
+                var bodyText = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Downstream hop failed ({response.StatusCode}): {bodyText}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Downstream hop exception: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
     private bool isSyncing = false;
     private string syncStatusMessage = "";
 
@@ -686,6 +815,7 @@
         public List<SourceItem> Sources { get; set; } = new();
         public string ScreenshotBase64 { get; set; } = "";
         public string Timestamp { get; set; } = "";
+        public List<InteractiveGrillNode> GrillNodes { get; set; } = new();
     }
 
     public class ReasoningStep

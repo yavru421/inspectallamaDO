@@ -24,6 +24,23 @@ namespace InspectaLlamaDO.Models
         public string ScreenshotBase64 { get; set; } = "";
         public string Timestamp { get; set; } = "";
         public string FolderId { get; set; } = "default";
+        public List<InteractiveGrillNode> GrillNodes { get; set; } = new();
+    }
+
+    public class InteractiveGrillNode {
+        public string NodeId { get; set; } = Guid.NewGuid().ToString();
+        public int StepIndex { get; set; }
+        public string Title { get; set; } = "";
+        public string ContextQuestion { get; set; } = "";
+        public List<GrillOption> Options { get; set; } = new();
+        public string SelectedOption { get; set; } = "";
+        public bool IsResolved { get; set; }
+    }
+
+    public class GrillOption {
+        public string Text { get; set; } = "";
+        public bool IsRecommended { get; set; }
+        public string Rationale { get; set; } = "";
     }
 
     public class ReasoningStep { public int Step { get; set; } public string Description { get; set; } = ""; }

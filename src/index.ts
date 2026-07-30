@@ -92,7 +92,7 @@ export default {
     // 3. Main Search Engine Route
     if (url.pathname === '/api/search' && request.method === 'POST') {
       try {
-        const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
+        const { query, deepCrawl = true, mode = 'deep_reasoning', selectedAnswers = [] } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string; selectedAnswers?: Array<{ question: string; answer: string }> };
 
         let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
         let deepContentText = '';
@@ -177,8 +177,12 @@ export default {
             deepContentText = pageContents.join('\n\n');
           }
 
-          const fullPrompt = `USER OBJECTIVE: "${query}"
+          const selectedAnswersContext = selectedAnswers.length > 0
+            ? `USER SELECTED RESEARCH DECISION BRANCHES:\n${selectedAnswers.map(a => `• Question: "${a.question}" -> User Choice: "${a.answer}"`).join('\n')}\n`
+            : '';
 
+          const fullPrompt = `USER OBJECTIVE: "${query}"
+${selectedAnswersContext}
 PRIMARY SEARCH SOURCES:
 ${searchResults.map(r => `• ${r.title} (${r.url}): ${r.snippet}`).join('\n')}
 
@@ -186,7 +190,8 @@ DEEP SCRAPED EXTRACTS:
 ${deepContentText}
 
 INSTRUCTIONS:
-You are InspectaLlama, a world-class Edge AI Research Engine. Synthesize an exhaustive, publication-grade markdown research report for "${query}". Break down the topic into structured sections.
+You are InspectaLlama, a world-class Edge AI Research Engine. Synthesize an exhaustive, publication-grade markdown research report for "${query}".
+In addition, generate 2 to 3 interactive /grill-me style decision nodes ("grillNodes") for step-by-step interview interrogation of this research topic. Each node must have a title, contextQuestion, and 2-3 distinct options (with one marked as isRecommended: true and a clear rationale).
 
 Output ONLY valid JSON matching this schema:
 {
@@ -194,7 +199,18 @@ Output ONLY valid JSON matching this schema:
   "reasoningTrace": [{"step": 1, "description": "Information retrieval and claim verification"}],
   "claims": [{"statement": "Verified claim", "verbatimQuote": "Direct quote", "sourceTitle": "${searchResults[0]?.title || 'Source'}", "sourceUrl": "${searchResults[0]?.url || 'URL'}", "epistemicStatus": "Fact", "confidenceScore": 95}],
   "entities": [{"name": "${query}", "category": "Concept", "description": "Primary research objective"}],
-  "disputes": [{"topic": "Key trade-off", "perspectiveA": "Advantage", "perspectiveB": "Limitation"}]
+  "disputes": [{"topic": "Key trade-off", "perspectiveA": "Advantage", "perspectiveB": "Limitation"}],
+  "grillNodes": [
+    {
+      "stepIndex": 1,
+      "title": "Decision Node 1",
+      "contextQuestion": "Question about architectural or strategic choice for ${query}?",
+      "options": [
+        {"text": "(Recommended) Option A", "isRecommended": true, "rationale": "Why this is optimal."},
+        {"text": "Option B", "isRecommended": false, "rationale": "Alternative perspective."}
+      ]
+    }
+  ]
 }`;
 
           let aiResponse: any = null;
@@ -244,6 +260,7 @@ Output ONLY valid JSON matching this schema:
             claims: Array.isArray(parsedData.claims) ? parsedData.claims : [],
             entities: Array.isArray(parsedData.entities) ? parsedData.entities : [],
             disputes: Array.isArray(parsedData.disputes) ? parsedData.disputes : [],
+            grillNodes: Array.isArray(parsedData.grillNodes) ? parsedData.grillNodes : [],
             sources: searchResults,
             timestamp: new Date().toISOString()
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
