@@ -433,8 +433,10 @@ You must output ONLY a valid JSON object matching this exact schema:
           let summaryText = "";
           if (typeof parsedCognitiveData === 'object' && parsedCognitiveData !== null && parsedCognitiveData.executiveSummary) {
             summaryText = String(parsedCognitiveData.executiveSummary);
+          } else if (typeof aiResponse?.response === 'string' && aiResponse.response.trim().length > 0) {
+            summaryText = aiResponse.response;
           } else {
-            summaryText = typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.';
+            summaryText = `Search Synthesis for "${query}":\n\n` + searchResults.map(s => `• ${s.title}: ${s.snippet}`).join('\n\n');
           }
 
           return new Response(JSON.stringify({
