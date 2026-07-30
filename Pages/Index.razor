@@ -242,15 +242,15 @@
                 </button>
                 <button @onclick='() => activeTab = "claims"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "claims" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
                     <span>🔍 Verified Claims Matrix</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Claims.Count</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Claims.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Claims.Count</span>
                 </button>
                 <button @onclick='() => activeTab = "entities"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "entities" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
                     <span>🌐 Entity Knowledge Graph</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Entities.Count</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Entities.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Entities.Count</span>
                 </button>
                 <button @onclick='() => activeTab = "disputes"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "disputes" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
                     <span>⚡ Trade-offs &amp; Disputes</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">@result.Disputes.Count</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Disputes.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Disputes.Count</span>
                 </button>
             </div>
 

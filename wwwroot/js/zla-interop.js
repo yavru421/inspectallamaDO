@@ -237,10 +237,18 @@ window.zlaInterop = {
             return;
         }
 
-        const printWin = window.open('', '_blank');
-        if (!printWin) {
-            alert('Please allow popups to view and print your Executive PDF Report.');
-            return;
+        // Create an invisible iframe for printing to completely bypass window.open popup blockers
+        let printIframe = document.getElementById('inspectallama-print-iframe');
+        if (!printIframe) {
+            printIframe = document.createElement('iframe');
+            printIframe.id = 'inspectallama-print-iframe';
+            printIframe.style.position = 'fixed';
+            printIframe.style.right = '0';
+            printIframe.style.bottom = '0';
+            printIframe.style.width = '0';
+            printIframe.style.height = '0';
+            printIframe.style.border = '0';
+            document.body.appendChild(printIframe);
         }
 
         const claimsHtml = (data.claims || []).map(c => `
@@ -274,7 +282,7 @@ window.zlaInterop = {
                 <title>InspectaLlama Executive Report - ${data.query}</title>
                 <style>
                     @page { size: A4; margin: 20mm; }
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; line-height: 1.6; margin: 0; padding: 0; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; line-height: 1.6; margin: 0; padding: 20px; }
                     .header { border-bottom: 3px solid #3b82f6; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
                     .header h1 { font-size: 24px; font-weight: 900; margin: 0; color: #1e3a8a; }
                     .header .meta { font-size: 12px; color: #64748b; text-align: right; }
@@ -284,84 +292,79 @@ window.zlaInterop = {
                     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
                     th { background: #f1f5f9; text-align: left; padding: 10px; font-weight: 700; color: #334155; border-bottom: 2px solid #cbd5e1; }
                     .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #94a3b8; text-align: center; }
-                    @media print {
-                        .no-print { display: none; }
-                    }
                 </style>
             </head>
             <body>
-                <div class="no-print" style="background: #3b82f6; color: white; padding: 12px 20px; text-align: center; font-weight: bold; position: sticky; top: 0;">
-                    📄 InspectaLlama Executive Report Preview &nbsp;|&nbsp;
-                    <button onclick="window.print()" style="background: white; color: #2563eb; border: none; font-weight: bold; padding: 6px 16px; border-radius: 6px; cursor: pointer; margin-left: 10px;">
-                        🖨️ Print / Save as PDF
-                    </button>
+                <div class="header">
+                    <div>
+                        <span class="badge">InspectaLlama Deep Cognitive Intelligence</span>
+                        <h1 style="margin-top: 5px;">Executive Research Brief</h1>
+                        <div style="font-size: 15px; font-weight: 600; color: #475569; margin-top: 4px;">Target: "${data.query}"</div>
+                    </div>
+                    <div class="meta">
+                        <div><strong>Date:</strong> ${data.timestamp ? new Date(data.timestamp).toLocaleString() : new Date().toLocaleDateString()}</div>
+                        <div><strong>Verified by:</strong> Cloudflare Edge Browser &amp; Llama 3.3 70B</div>
+                    </div>
                 </div>
-                <div style="padding: 20px;">
-                    <div class="header">
-                        <div>
-                            <span class="badge">InspectaLlama Deep Cognitive Intelligence</span>
-                            <h1 style="margin-top: 5px;">Executive Research Brief</h1>
-                            <div style="font-size: 15px; font-weight: 600; color: #475569; margin-top: 4px;">Target: "${data.query}"</div>
-                        </div>
-                        <div class="meta">
-                            <div><strong>Date:</strong> ${data.timestamp ? new Date(data.timestamp).toLocaleString() : new Date().toLocaleDateString()}</div>
-                            <div><strong>Verified by:</strong> Cloudflare Edge Browser &amp; Llama 3.3 70B</div>
-                        </div>
-                    </div>
 
-                    <h2>Executive Overview &amp; Synthesis</h2>
-                    <div class="summary">
-                        ${(data.synthesis || '').replace(/\n/g, '<br/>')}
-                    </div>
+                <h2>Executive Overview &amp; Synthesis</h2>
+                <div class="summary">
+                    ${(data.synthesis || '').replace(/\n/g, '<br/>')}
+                </div>
 
-                    ${claimsHtml ? `
-                    <h2>Verified Claim &amp; Epistemic Matrix</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Claim Statement</th>
-                                <th>Verbatim Source Quote</th>
-                                <th>Source</th>
-                                <th>Status</th>
-                                <th>Confidence</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${claimsHtml}
-                        </tbody>
-                    </table>
-                    ` : ''}
+                ${claimsHtml ? `
+                <h2>Verified Claim &amp; Epistemic Matrix</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Claim Statement</th>
+                            <th>Verbatim Source Quote</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${claimsHtml}
+                    </tbody>
+                </table>
+                ` : ''}
 
-                    ${disputesHtml ? `
-                    <h2>Dialectical Trade-off &amp; Dispute Breakdown</h2>
-                    ${disputesHtml}
-                    ` : ''}
+                ${disputesHtml ? `
+                <h2>Dialectical Trade-off &amp; Dispute Breakdown</h2>
+                ${disputesHtml}
+                ` : ''}
 
-                    ${sourcesHtml ? `
-                    <h2>Audited Source Citations</h2>
-                    <ul style="padding-left: 20px; font-size: 13px;">
-                        ${sourcesHtml}
-                    </ul>
-                    ` : ''}
+                ${sourcesHtml ? `
+                <h2>Audited Source Citations</h2>
+                <ul style="padding-left: 20px; font-size: 13px;">
+                    ${sourcesHtml}
+                </ul>
+                ` : ''}
 
-                    ${data.screenshotBase64 ? `
-                    <h2>Primary Inspected Web Screenshot</h2>
-                    <div style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-top: 15px;">
-                        <img src="data:image/jpeg;base64,${data.screenshotBase64}" style="width: 100%; height: auto; display: block;" />
-                    </div>
-                    ` : ''}
+                ${data.screenshotBase64 ? `
+                <h2>Primary Inspected Web Screenshot</h2>
+                <div style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-top: 15px;">
+                    <img src="data:image/jpeg;base64,${data.screenshotBase64}" style="width: 100%; height: auto; display: block;" />
+                </div>
+                ` : ''}
 
-                    <div class="footer">
-                        Generated by InspectaLlama DO Platform &bull; inspectallamado.dondlingergc.com &bull; Confidential Research Intelligence
-                    </div>
+                <div class="footer">
+                    Generated by InspectaLlama DO Platform &bull; inspectallamado.dondlingergc.com &bull; Confidential Research Intelligence
                 </div>
             </body>
             </html>
         `;
 
-        printWin.document.open();
-        printWin.document.write(htmlContent);
-        printWin.document.close();
+        const iframeDoc = printIframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+
+        setTimeout(() => {
+            printIframe.contentWindow.focus();
+            printIframe.contentWindow.print();
+        }, 250);
     }
 };
 

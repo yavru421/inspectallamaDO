@@ -28,11 +28,13 @@ For complex multi-line scripts, DuckDB operations, and commands requiring struct
 </RULE[AGENTS.md]>
 
 <RULE[AGENTS.md]>
-**Pre-Flight Command Verification & DuckDB Cross-Referencing Invariant:**
-Before invoking `run_command` to execute complex Python scripts or terminal operations, the agent MUST:
-1. Verify exact database schemas and column names via direct introspection or `db_session.py` before executing queries.
-2. Cross-reference `agent_memory.transcripts` to reuse verified working command templates and parameter patterns.
-3. Eliminate string-escaping trial-and-error by passing parameters via structured lists or validated script files rather than raw inline command strings.
+**Canonical DuckDB Database Registry & Command Invariant:**
+All DuckDB database queries MUST use the explicit, absolute paths registered below without runtime path guessing or exploratory checks:
+- **`mind.duckdb`**: `C:\Users\John\.gemini\config\mind.duckdb`
+- **`agent_memory.duckdb`**: `C:\Users\John\.gemini\config\agent_memory.duckdb`
+- **`st_codex.duckdb`**: `C:\Users\John\.gemini\config\st_codex.duckdb`
+
+Before invoking `run_command` or Python DuckDB scripts, the agent MUST explicitly target these exact paths. Never construct relative paths, infer session directories, or run exploratory file sweeps.
 </RULE[AGENTS.md]>
 
 <RULE[AGENTS.md]>
@@ -86,6 +88,13 @@ Telemetry MUST ALWAYS query disk modification timestamps (c:\dev\) and active Du
 </RULE[AGENTS.md]>
 
 
+<RULE[AGENTS.md]>
+**Cloudflare Billing Emergency & Telemetry Invariant:**
+When investigating runaway Cloudflare usage, unknown billing draws, or massive AI token spikes (e.g., Regular Twitch Neurons / RTN):
+1. **DO NOT** blindly attempt to `wrangler tail` multiple projects. This is too slow and prone to WebSocket timeouts during emergencies.
+2. **MANDATORY ACTION**: Immediately execute the Cloudflare Telemetry sweep script (`C:\Users\John\.gemini\config\skills\cloudflare-telemetry\scripts\query_cf.ps1`) to generate the `dashboard.html` report.
+3. Read the generated HTML dashboard and specifically check for anomalous **D1 Database file sizes** (runaway loops instantly bloat their ledger DBs) and **Recent Deployment Timestamps** to instantly isolate the offending project.
+</RULE[AGENTS.md]>
 
 <RULE[AGENTS.md]>
 **Operator Identity & Product Vision Invariant:**
@@ -113,3 +122,19 @@ When building live broadcast or real-time state APIs on Cloudflare Workers and D
 3. **HTTP Heartbeat Listener Tracking**: For platforms supporting non-WebSocket HTTP clients, track active listener sessions via a `clientId` parameter mapped to sliding timestamp heartbeats in DO memory rather than relying solely on `this.ctx.getWebSockets().length`.
 </RULE[AGENTS.md]>
 
+<RULE[AGENTS.md]>
+**Domain-Aware Telemetry SQL Invariant:**
+Whenever querying system history in DuckDB (mind.duckdb, agent_memory.duckdb, st_codex.duckdb) for user behavioral metrics:
+1. NEVER use rigid single-binary strings like LIKE '%ffmpeg%' or LIKE '%magick%'.
+2. ALWAYS expand SQL pattern filters to include verified operator aliases, shell scripts, and asset extensions:
+   - Video Editing & Rendering: Must check process-footage, process-fotage.ps1, blender, %.blend, alongside ffmpeg.
+   - 3D CAD & Spool Operations: Must check pour_logic.scad, %.scad, klipper, octoprint, spool.
+   - PowerShell / Automation Scripts: Must check send-agentmessage.ps1, remember_recent.ps1, clean-templatedemos.ps1, vault.ps1.
+</RULE[AGENTS.md]>
+
+<RULE[AGENTS.md]>
+**Synchronous Execution Invariant for Python & DuckDB Operations:**
+1. **Never Background Quick Commands**: When running Python scripts, DuckDB queries (`db_session.py`), HTTP verification checks, or single-step status probes via `run_command`, ALWAYS set `WaitMsBeforeAsync: 10000` (or `WaitMsBeforeAsync: 8000`) so the command completes synchronously within the step.
+2. **Prevent Database Lock Timeouts**: Asynchronous background Python tasks that query DuckDB hold file locks on DuckDB databases (`mind.duckdb`, `agent_memory.duckdb`) and prevent subsequent agent turns from reading or writing telemetry.
+3. **Immediate Error Visibility**: Running synchronous execution ensures any command failure, traceback, or stdout is immediately captured in context without leaving orphaned background tasks (`task-XX`) running indefinitely.
+</RULE[AGENTS.md]>
