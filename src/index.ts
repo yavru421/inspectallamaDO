@@ -408,7 +408,14 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             if (cleanJsonStr.startsWith('```json')) cleanJsonStr = cleanJsonStr.slice(7);
             if (cleanJsonStr.startsWith('```')) cleanJsonStr = cleanJsonStr.slice(3);
             if (cleanJsonStr.endsWith('```')) cleanJsonStr = cleanJsonStr.slice(0, -3);
-            parsedCognitiveData = JSON.parse(cleanJsonStr.trim());
+            
+            // Handle cases where the model returns JSON wrapped in an outer string or raw text
+            const firstBrace = cleanJsonStr.indexOf('{');
+            const lastBrace = cleanJsonStr.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1) {
+              cleanJsonStr = cleanJsonStr.substring(firstBrace, lastBrace + 1);
+            }
+            parsedCognitiveData = JSON.parse(cleanJsonStr);
           } catch (e) {
             parsedCognitiveData = {
               executiveSummary: typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.',
@@ -420,10 +427,10 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           }
 
           let summaryText = "";
-          if (typeof parsedCognitiveData === 'object' && parsedCognitiveData !== null) {
-            summaryText = parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.';
+          if (typeof parsedCognitiveData === 'object' && parsedCognitiveData !== null && parsedCognitiveData.executiveSummary) {
+            summaryText = String(parsedCognitiveData.executiveSummary);
           } else {
-            summaryText = String(parsedCognitiveData);
+            summaryText = typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.';
           }
 
           return new Response(JSON.stringify({
