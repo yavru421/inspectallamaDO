@@ -51,13 +51,14 @@ export default {
         } catch (_) {}
       }
       const isPro = tier === 'pro' || tier === 'enterprise';
+      const freeSearches = balance > 0 ? Math.floor(balance / 5) : 100;
       return new Response(JSON.stringify({
         userId,
         tier,
         isPro,
         searchesUsed: 0,
-        searchesRemaining: isPro ? null : Math.floor(balance / 5),
-        dailyLimit: null,
+        searchesRemaining: isPro ? null : freeSearches,
+        dailyLimit: isPro ? null : 100,
         activeCount: 1
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
