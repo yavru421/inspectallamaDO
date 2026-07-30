@@ -334,36 +334,38 @@ DEEP SCRAPED PAGE EXTRACTS:
 ${deepContentText}
 
 SYSTEM INSTRUCTIONS:
-Execute a full cognitive analysis. You must output ONLY a valid JSON object with the following schema:
+You are InspectaLlama, a world-class Edge AI Research Engine. Conduct an exhaustive, highly detailed cognitive research synthesis for the user query.
+
+You must output ONLY a valid JSON object matching this exact schema:
 {
-  "executiveSummary": "Comprehensive high-level synthesis markdown...",
+  "executiveSummary": "Write a multi-paragraph, publication-grade research report in rich markdown format. Break down the topic into structured sections (e.g. ## Core Overview, ## Detailed Step-by-Step / Architectural Breakdown, ## Critical Trade-offs & Recommendations). Provide exhaustive depth, precise technical/procedural details, and actionable guidance rather than a short 2-sentence summary.",
   "reasoningTrace": [
-    {"step": 1, "description": "Vector decomposition and query planning..."},
-    {"step": 2, "description": "Deep text extraction from target web pages..."},
-    {"step": 3, "description": "Dialectical claim verification & epistemic rating..."}
+    {"step": 1, "description": "Vector query planning and domain entity identification"},
+    {"step": 2, "description": "Deep text extraction across scraped web page DOM targets"},
+    {"step": 3, "description": "Dialectical claim verification and confidence scoring"}
   ],
   "claims": [
     {
-      "statement": "Specific verified claim statement",
+      "statement": "Specific verified factual claim statement",
       "verbatimQuote": "Direct quote from source backing this claim",
       "sourceTitle": "Source title",
       "sourceUrl": "Source URL",
-      "epistemicStatus": "Fact",
+      "epistemicStatus": "Fact | Disputed | Marketing",
       "confidenceScore": 95
     }
   ],
   "entities": [
     {
       "name": "Entity Name",
-      "category": "Technology | Concept | Person",
-      "description": "Short explanation of role and significance"
+      "category": "Technology | Concept | Person | Method",
+      "description": "Exhaustive explanation of role, importance, and mechanics"
     }
   ],
   "disputes": [
     {
       "topic": "Topic of trade-off or debate",
-      "perspectiveA": "Pros / Argument A",
-      "perspectiveB": "Cons / Argument B"
+      "perspectiveA": "Pros / Argument A / Advantage",
+      "perspectiveB": "Cons / Argument B / Disadvantage"
     }
   ]
 }`;
