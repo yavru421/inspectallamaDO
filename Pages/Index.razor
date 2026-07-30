@@ -510,7 +510,8 @@
     private async Task GeneratePdfReport()
     {
         if (result == null) return;
-        var json = System.Text.Json.JsonSerializer.Serialize(result);
+        var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+        var json = System.Text.Json.JsonSerializer.Serialize(result, opts);
         await JS.InvokeVoidAsync("zlaInterop.generateExecutivePdf", json);
     }
 
