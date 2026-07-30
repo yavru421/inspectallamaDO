@@ -371,6 +371,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           let aiResponse: any = null;
           try {
             aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+              max_tokens: 4096,
               messages: [
                 {
                   role: 'system',
@@ -386,6 +387,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             console.log('Primary Llama 3.3 70B model failed, attempting 8B fallback...', modelErr);
             try {
               aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+                max_tokens: 4096,
                 messages: [
                   {
                     role: 'system',
@@ -456,6 +458,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           let aiResponse: any = null;
           try {
             aiResponse = await this.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+              max_tokens: 4096,
               messages: [
                 {
                   role: 'system',
@@ -470,6 +473,7 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
           } catch (modelErr) {
             try {
               aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+                max_tokens: 4096,
                 messages: [
                   {
                     role: 'system',
