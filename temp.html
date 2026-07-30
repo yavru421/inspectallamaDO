@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>InspectaLlama &bull; Next-Gen AI Web Search Engine</title>
+    <base href="/" />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link href="InspectaLlamaDO.styles.css" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            100: '#c9d1d9',
+                            200: '#c9d1d9',
+                            300: '#8b949e',
+                            400: '#8b949e',
+                            500: '#8b949e',
+                            600: '#8b949e',
+                            700: '#30363d',
+                            800: '#30363d',
+                            900: '#161b22',
+                            950: '#0d1117',
+                        },
+                        indigo: {
+                            300: '#2ea043',
+                            400: '#238636',
+                            500: '#2ea043',
+                            600: '#238636',
+                        },
+                        cyan: {
+                            300: '#2ea043',
+                            400: '#238636',
+                            500: '#2ea043',
+                            600: '#238636',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="css/app.css" rel="stylesheet" />
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="app">
+        <div class="shotstack-loader">
+            <div class="spinner"></div>
+            <span class="loading-text">Mounting InspectaLlama Edge Core...</span>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: var(--blazor-load-percentage, 0%)"></div>
+            </div>
+            <style>
+                .progress-text::after {
+                    content: var(--blazor-load-percentage-text, "0") "%";
+                }
+            </style>
+            <span class="progress-text">Loading... </span>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" class="hidden fixed bottom-0 left-0 right-0 bg-red-900/90 text-white p-4 text-center text-sm z-50">
+        An unhandled error has occurred.
+        <a href="" class="underline font-bold ml-2">Reload</a>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="js/pwa-helper.js"></script>
+    <script src="js/zla-interop.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"7a815eb33c2742d5badbd1dcab346314","r":1}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2380138680c1152',t:'MTc4NTQ1MjY5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+

@@ -5,6 +5,30 @@
 
 <PageTitle>InspectaLlama &bull; Pinnacle Deep Semantic AI Research</PageTitle>
 
+@* Floating Mobile Bottom Screen Navigation Dock *@
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-full px-3 py-2 shadow-2xl flex items-center gap-1.5 sm:gap-3 text-xs font-bold text-slate-300 pointer-events-auto">
+    <button @onclick='() => ScrollToScreen("screen-search")' 
+            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 bg-indigo-600/30 text-indigo-300 border border-indigo-500/50 hover:bg-indigo-600 hover:text-white">
+        <span>🔍</span>
+        <span class="hidden sm:inline">1. Search</span>
+    </button>
+    <button @onclick='() => ScrollToScreen("screen-synthesis")' 
+            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
+        <span>🧠</span>
+        <span class="hidden sm:inline">2. Synthesis</span>
+    </button>
+    <button @onclick='() => ScrollToScreen("screen-data")' 
+            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
+        <span>🌐</span>
+        <span class="hidden sm:inline">3. Data</span>
+    </button>
+    <button @onclick='() => ScrollToScreen("screen-grill")' 
+            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
+        <span>🎯</span>
+        <span class="hidden sm:inline">4. Grill Me</span>
+    </button>
+</div>
+
 <div class="w-full h-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar bg-slate-950" id="app-swiper">
     
     @* SCREEN 1: Search & Scraper *@
@@ -182,21 +206,17 @@
                 </div>
             }
             
-            @if (result != null)
-            {
-                <div class="mt-4 animate-bounce text-slate-500 flex flex-col items-center gap-1">
-                    <span class="text-xs font-bold uppercase tracking-wider">Swipe to view insights</span>
-                    <span>→</span>
-                </div>
-            }
+            <div class="mt-4 animate-pulse text-slate-400 flex flex-col items-center gap-1">
+                <span class="text-xs font-bold uppercase tracking-wider">Swipe right to explore results & stepper deck →</span>
+            </div>
         </div>
     </section>
 
-    @if (result != null)
-    {
-        @* SCREEN 2: Synthesis *@
-        <section id="screen-synthesis" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
-            <div class="max-w-4xl mx-auto w-full space-y-6">
+    @* SCREEN 2: Synthesis *@
+    <section id="screen-synthesis" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+        <div class="max-w-4xl mx-auto w-full space-y-6">
+            @if (result != null)
+            {
                 <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
                         <div>
@@ -241,13 +261,28 @@
                         </div>
                     }
                 </div>
-            </div>
-        </section>
+            }
+            else
+            {
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-4 my-auto">
+                    <span class="text-5xl opacity-40">🧠</span>
+                    <h3 class="text-xl font-bold text-white">Executive Synthesis Pending</h3>
+                    <p class="text-sm text-slate-400 max-w-md">
+                        Submit a research query on Screen 1 to generate an autonomous edge-synthesized intelligence brief.
+                    </p>
+                    <button @onclick='() => ScrollToScreen("screen-search")' class="mt-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+                        ← Back to Search (Screen 1)
+                    </button>
+                </div>
+            }
+        </div>
+    </section>
 
-        @* SCREEN 3: Data Matrix (Claims & Entities) *@
-        <section id="screen-data" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
-            <div class="max-w-5xl mx-auto w-full space-y-8">
-                
+    @* SCREEN 3: Data Matrix (Claims & Entities) *@
+    <section id="screen-data" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+        <div class="max-w-5xl mx-auto w-full space-y-8">
+            @if (result != null)
+            {
                 @if (result.Claims.Any())
                 {
                     <div>
@@ -311,131 +346,143 @@
                         </div>
                     </div>
                 }
-            </div>
-        </section>
+            }
+            else
+            {
+                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-4 my-auto">
+                    <span class="text-5xl opacity-40">🌐</span>
+                    <h3 class="text-xl font-bold text-white">Data Matrix Awaiting Telemetry</h3>
+                    <p class="text-sm text-slate-400 max-w-md">
+                        Claim verification matrices and knowledge graphs will materialize here once search execution completes.
+                    </p>
+                </div>
+            }
+        </div>
+    </section>
 
-                @* SCREEN 4: The /grill-me Stepper Deck *@
-        <section id="screen-grill" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 relative overflow-hidden bg-[var(--bg-darker)]">
-            <div class="max-w-3xl mx-auto w-full h-full flex flex-col pt-16 sm:pt-0">
-                <div class="text-center mb-6 shrink-0">
-                    <span class="text-4xl mb-3 block animate-pulse">🎯</span>
-                    <h3 class="font-black text-2xl text-[var(--text-white)] tracking-tight">Interactive Decision Engine</h3>
-                    <p class="text-sm text-[var(--text-dark-muted)] mt-2">The AI paused at key research branches. Swipe through the deck and select your preferred paths for downstream evaluation.</p>
+    @* SCREEN 4: The /grill-me Stepper Deck *@
+    <section id="screen-grill" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 relative overflow-hidden bg-[var(--bg-darker)]">
+        <div class="max-w-3xl mx-auto w-full h-full flex flex-col pt-16 sm:pt-0 justify-center">
+            <div class="text-center mb-6 shrink-0">
+                <span class="text-4xl mb-3 block animate-pulse">🎯</span>
+                <h3 class="font-black text-2xl text-[var(--text-white)] tracking-tight">Interactive Decision Engine</h3>
+                <p class="text-sm text-[var(--text-dark-muted)] mt-2">The AI paused at key research branches. Swipe through the deck and select your preferred paths for downstream evaluation.</p>
+            </div>
+
+            @if (result != null && result.GrillNodes != null && result.GrillNodes.Any())
+            {
+                var resolvedCount = result.GrillNodes.Count(n => n.IsResolved);
+                var totalCount = result.GrillNodes.Count;
+                var allResolved = resolvedCount == totalCount;
+                var progressPct = (int)((float)resolvedCount / totalCount * 100);
+
+                <div class="w-full mb-4 shrink-0 bg-[var(--bg-panel)] p-4 rounded-xl border border-[var(--border-dim)] flex items-center justify-between shadow-lg">
+                    <div class="flex flex-col gap-1 w-full max-w-[200px]">
+                        <span class="text-xs font-bold text-[var(--text-dark-muted)] uppercase tracking-wider">Decision Progress</span>
+                        <div class="w-full h-2 bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
+                            <div class="h-full bg-[var(--brand-accent)] transition-all duration-500 ease-out" style="width: @(progressPct)%"></div>
+                        </div>
+                    </div>
+                    <span class="text-sm font-black font-mono @(allResolved ? "text-[var(--brand-accent)]" : "text-[var(--text-white)]")">
+                        @resolvedCount / @totalCount
+                    </span>
                 </div>
 
-                @if (result.GrillNodes != null && result.GrillNodes.Any())
-                {
-                    var resolvedCount = result.GrillNodes.Count(n => n.IsResolved);
-                    var totalCount = result.GrillNodes.Count;
-                    var allResolved = resolvedCount == totalCount;
-                    var progressPct = (int)((float)resolvedCount / totalCount * 100);
-
-                    <div class="w-full mb-4 shrink-0 bg-[var(--bg-panel)] p-4 rounded-xl border border-[var(--border-dim)] flex items-center justify-between shadow-lg">
-                        <div class="flex flex-col gap-1 w-full max-w-[200px]">
-                            <span class="text-xs font-bold text-[var(--text-dark-muted)] uppercase tracking-wider">Decision Progress</span>
-                            <div class="w-full h-2 bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
-                                <div class="h-full bg-[var(--brand-accent)] transition-all duration-500 ease-out" style="width: @(progressPct)%"></div>
-                            </div>
-                        </div>
-                        <span class="text-sm font-black font-mono @(allResolved ? "text-[var(--brand-accent)]" : "text-[var(--text-white)]")">
-                            @resolvedCount / @totalCount
-                        </span>
-                    </div>
-
-                    <div class="w-full flex-1 overflow-x-auto snap-x snap-mandatory flex gap-6 pb-8 hide-scrollbar scroll-smooth items-center">
-                        @foreach (var node in result.GrillNodes)
-                        {
-                            <div id="node-@node.NodeId" class="w-[90%] sm:w-full max-w-2xl shrink-0 snap-center snap-always p-6 sm:p-8 rounded-2xl bg-[var(--bg-panel)] border @(node.IsResolved ? "border-[var(--brand-accent)] ring-1 ring-[var(--brand-accent)]" : "border-[rgba(240,136,62,0.3)]") shadow-2xl space-y-6 flex flex-col h-full max-h-[70vh] overflow-y-auto hide-scrollbar relative">
-                                @if (node.IsResolved)
+                <div class="w-full flex-1 overflow-x-auto snap-x snap-mandatory flex gap-6 pb-8 hide-scrollbar scroll-smooth items-center">
+                    @foreach (var node in result.GrillNodes)
+                    {
+                        <div id="node-@node.NodeId" class="w-[90%] sm:w-full max-w-2xl shrink-0 snap-center snap-always p-6 sm:p-8 rounded-2xl bg-[var(--bg-panel)] border @(node.IsResolved ? "border-[var(--brand-accent)] ring-1 ring-[var(--brand-accent)]" : "border-[rgba(240,136,62,0.3)]") shadow-2xl space-y-6 flex flex-col h-full max-h-[70vh] overflow-y-auto hide-scrollbar relative">
+                            @if (node.IsResolved)
+                            {
+                                <div class="absolute inset-0 bg-[var(--brand-accent)]/5 rounded-2xl pointer-events-none"></div>
+                            }
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-dim)] pb-4 shrink-0">
+                                <span class="px-3 py-1.5 rounded-full text-[10px] font-black font-mono uppercase tracking-widest @(node.IsResolved ? "bg-[rgba(35,134,54,0.15)] text-[var(--brand-accent)]" : "bg-[rgba(240,136,62,0.15)] text-[#f0883e]")">
+                                    Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Resolved" : "⏳ Awaiting Selection")
+                                </span>
+                                @if (!string.IsNullOrEmpty(node.SelectedOption))
                                 {
-                                    <div class="absolute inset-0 bg-[var(--brand-accent)]/5 rounded-2xl pointer-events-none"></div>
-                                }
-                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-dim)] pb-4 shrink-0">
-                                    <span class="px-3 py-1.5 rounded-full text-[10px] font-black font-mono uppercase tracking-widest @(node.IsResolved ? "bg-[rgba(35,134,54,0.15)] text-[var(--brand-accent)]" : "bg-[rgba(240,136,62,0.15)] text-[#f0883e]")">
-                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Resolved" : "⏳ Awaiting Selection")
+                                    <span class="text-[10px] text-[var(--brand-accent)] font-bold bg-[rgba(35,134,54,0.1)] px-2 py-1 rounded border border-[rgba(35,134,54,0.2)] truncate max-w-[200px]">
+                                        @node.SelectedOption
                                     </span>
-                                    @if (!string.IsNullOrEmpty(node.SelectedOption))
-                                    {
-                                        <span class="text-[10px] text-[var(--brand-accent)] font-bold bg-[rgba(35,134,54,0.1)] px-2 py-1 rounded border border-[rgba(35,134,54,0.2)] truncate max-w-[200px]">
-                                            @node.SelectedOption
-                                        </span>
-                                    }
-                                </div>
-                                
-                                <div class="shrink-0">
-                                    <h4 class="font-black text-[var(--text-white)] text-xl sm:text-2xl tracking-tight mb-3 leading-tight">@node.Title</h4>
-                                    <p class="text-base text-[var(--text-white)] opacity-90 leading-relaxed font-medium">@node.ContextQuestion</p>
-                                </div>
+                                }
+                            </div>
+                            
+                            <div class="shrink-0">
+                                <h4 class="font-black text-[var(--text-white)] text-xl sm:text-2xl tracking-tight mb-3 leading-tight">@node.Title</h4>
+                                <p class="text-base text-[var(--text-white)] opacity-90 leading-relaxed font-medium">@node.ContextQuestion</p>
+                            </div>
 
-                                <div class="grid grid-cols-1 gap-3 mt-auto relative z-10">
-                                    @foreach (var opt in node.Options)
-                                    {
-                                        var isCurrentSelected = node.SelectedOption == opt.Text;
-                                        <div @onclick='() => SelectGrillOption(node, opt)'
-                                             class="group touch-target p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none @(isCurrentSelected ? "bg-[rgba(35,134,54,0.1)] border-[var(--brand-accent)] text-[var(--text-white)] shadow-md" : opt.IsRecommended ? "bg-[rgba(240,136,62,0.05)] border-[rgba(240,136,62,0.3)] hover:border-[#f0883e]" : "bg-[rgba(22,27,34,0.5)] border-[var(--border-dim)] hover:border-[rgba(139,148,158,0.5)]") flex flex-col gap-2">
-                                            
-                                            <div class="flex items-start justify-between gap-3">
-                                                <div class="flex items-center gap-2">
-                                                    @if (opt.IsRecommended)
-                                                    {
-                                                        <span class="px-1.5 py-0.5 rounded bg-[rgba(240,136,62,0.2)] text-[#f0883e] font-black text-[9px] uppercase shadow-sm shrink-0" title="AI Recommended Option">★</span>
-                                                    }
-                                                    <span class="font-bold text-[15px] @(isCurrentSelected ? "text-[var(--brand-accent)]" : "text-[var(--text-white)]") group-hover:text-white transition-colors">@opt.Text</span>
-                                                </div>
-                                                <div class="shrink-0 pt-0.5">
-                                                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors @(isCurrentSelected ? "border-[var(--brand-accent)] bg-[var(--brand-accent)]" : "border-[var(--border-dim)] group-hover:border-[var(--text-dark-muted)]")">
-                                                        @if (isCurrentSelected) { <span class="text-white text-[10px] font-black">✓</span> }
-                                                    </div>
+                            <div class="grid grid-cols-1 gap-3 mt-auto relative z-10">
+                                @foreach (var opt in node.Options)
+                                {
+                                    var isCurrentSelected = node.SelectedOption == opt.Text;
+                                    <div @onclick='() => SelectGrillOption(node, opt)'
+                                         class="group touch-target p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none @(isCurrentSelected ? "bg-[rgba(35,134,54,0.1)] border-[var(--brand-accent)] text-[var(--text-white)] shadow-md" : opt.IsRecommended ? "bg-[rgba(240,136,62,0.05)] border-[rgba(240,136,62,0.3)] hover:border-[#f0883e]" : "bg-[rgba(22,27,34,0.5)] border-[var(--border-dim)] hover:border-[rgba(139,148,158,0.5)]") flex flex-col gap-2">
+                                        
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex items-center gap-2">
+                                                @if (opt.IsRecommended)
+                                                {
+                                                    <span class="px-1.5 py-0.5 rounded bg-[rgba(240,136,62,0.2)] text-[#f0883e] font-black text-[9px] uppercase shadow-sm shrink-0" title="AI Recommended Option">★</span>
+                                                }
+                                                <span class="font-bold text-[15px] @(isCurrentSelected ? "text-[var(--brand-accent)]" : "text-[var(--text-white)]") group-hover:text-white transition-colors">@opt.Text</span>
+                                            </div>
+                                            <div class="shrink-0 pt-0.5">
+                                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors @(isCurrentSelected ? "border-[var(--brand-accent)] bg-[var(--brand-accent)]" : "border-[var(--border-dim)] group-hover:border-[var(--text-dark-muted)]")">
+                                                    @if (isCurrentSelected) { <span class="text-white text-[10px] font-black">✓</span> }
                                                 </div>
                                             </div>
-
-                                            @if (!string.IsNullOrEmpty(opt.Rationale))
-                                            {
-                                                <p class="text-xs text-[var(--text-dark-muted)] leading-relaxed pl-1 border-l-2 border-[var(--border-dim)] ml-1 @(isCurrentSelected ? "border-[var(--brand-accent)] opacity-100" : "opacity-80 group-hover:opacity-100")">
-                                                    @opt.Rationale
-                                                </p>
-                                            }
                                         </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
 
-                    <div class="shrink-0 flex justify-center mt-4">
-                        @if (isLoading)
-                        {
-                            <div class="w-full sm:w-auto touch-target disabled:opacity-30 disabled:cursor-not-allowed text-white font-black px-10 py-4 rounded-full transition-all duration-300 shadow-2xl flex items-center justify-center gap-3 text-lg border bg-[var(--brand-accent)] border-[var(--brand-accent)]">
-                                <span class="animate-spin text-xl">🔄</span>
-                                <span>Executing Edge Hop...</span>
-                            </div>
-                        }
-                        else
-                        {
-                            <!-- Button is now hidden, the hop executes automatically when all resolved. -->
-                            <!-- We can show a pending status instead -->
-                            <div class="text-[var(--text-dark-muted)] text-sm font-semibold">
-                                @if (!allResolved)
-                                {
-                                    <span>Resolve @(totalCount - resolvedCount) more nodes to continue.</span>
+                                        @if (!string.IsNullOrEmpty(opt.Rationale))
+                                        {
+                                            <p class="text-xs text-[var(--text-dark-muted)] leading-relaxed pl-1 border-l-2 border-[var(--border-dim)] ml-1 @(isCurrentSelected ? "border-[var(--brand-accent)] opacity-100" : "opacity-80 group-hover:opacity-100")">
+                                                @opt.Rationale
+                                            </p>
+                                        }
+                                    </div>
                                 }
                             </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-16 bg-[var(--bg-panel)] border border-[var(--border-dim)] rounded-2xl p-6 shadow-lg">
-                        <span class="text-3xl mb-4 block opacity-50">🧭</span>
-                        <h4 class="font-bold text-[var(--text-white)] text-lg">No Active Stepper Nodes</h4>
-                        <p class="text-sm text-[var(--text-dark-muted)] mt-2">Run a query in 🧠 Deep Multi-Hop Mode to generate a decision tree.</p>
-                    </div>
-                }
-            </div>
-        </section>
-    }
-</div>
+                        </div>
+                    }
+                </div>
 
+                <div class="shrink-0 flex justify-center mt-4">
+                    @if (isLoading)
+                    {
+                        <div class="w-full sm:w-auto touch-target text-white font-black px-10 py-4 rounded-full shadow-2xl flex items-center justify-center gap-3 text-lg border bg-[var(--brand-accent)] border-[var(--brand-accent)]">
+                            <span class="animate-spin text-xl">🔄</span>
+                            <span>Executing Edge Hop...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-[var(--text-dark-muted)] text-sm font-semibold">
+                            @if (!allResolved)
+                            {
+                                <span>Resolve @(totalCount - resolvedCount) more nodes to continue.</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-16 bg-[var(--bg-panel)] border border-[var(--border-dim)] rounded-2xl p-8 shadow-lg max-w-lg mx-auto">
+                    <span class="text-4xl mb-4 block opacity-60 animate-bounce">🧭</span>
+                    <h4 class="font-bold text-[var(--text-white)] text-xl">No Active Decision Nodes</h4>
+                    <p class="text-sm text-[var(--text-dark-muted)] mt-2 leading-relaxed">
+                        Run a query in 🧠 <strong>Deep Multi-Hop Mode</strong> on Screen 1 to generate an interactive decision deck.
+                    </p>
+                    <button @onclick='() => ScrollToScreen("screen-search")' class="mt-4 px-6 py-2.5 rounded-full bg-[var(--brand-accent)] hover:bg-[var(--brand-accent-hover)] text-white font-bold text-xs transition">
+                        Go to Search (Screen 1)
+                    </button>
+                </div>
+            }
+        </div>
+    </section>
+</div>
 
 @code {
     private string searchQuery = "";
@@ -448,6 +495,11 @@
     private string? errorMessage = null;
     private SearchResultResponse? result = null;
     private UserStatus? userStatus = null;
+
+    private async Task ScrollToScreen(string screenId)
+    {
+        await JS.InvokeVoidAsync("zlaInterop.scrollToElement", screenId);
+    }
 
     private string UsagePillClass => userStatus?.SearchesRemaining switch
     {
@@ -593,6 +645,7 @@
                 activeTab = "synthesis";
                 await IncrementCreditTickerState(credits: 2, estimatedTokens: 1200);
                 await RefreshUserStatus();
+                await ScrollToScreen("screen-synthesis");
             }
             else if ((int)response.StatusCode == 429)
             {
@@ -668,6 +721,7 @@
                 activeTab = "synthesis";
                 await IncrementCreditTickerState(credits: 1, estimatedTokens: 800);
                 await RefreshUserStatus();
+                await ScrollToScreen("screen-synthesis");
             }
             else
             {
@@ -725,113 +779,5 @@
 
         var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
         await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, md, "text/markdown;charset=utf-8");
-    }
-
-    private async Task SyncWithPersonalization()
-    {
-        if (result == null) return;
-        isSyncing = true;
-        syncStatusMessage = "";
-
-        try
-        {
-            var payload = System.Text.Json.JsonSerializer.Serialize(new
-            {
-                app = "inspectallamado",
-                timestamp = DateTime.UtcNow,
-                lastQuery = result.Query,
-                sourcesCount = result.Sources.Count
-            });
-
-            var success = await JS.InvokeAsync<bool>("zlaInterop.syncSettingsToPersonalization", payload);
-            if (success)
-            {
-                syncStatusMessage = "✓ Synced search report with personalization.dondlingergc.com!";
-            }
-            else
-            {
-                syncStatusMessage = "✓ Saved search session locally (ZLA mode).";
-            }
-        }
-        catch
-        {
-            syncStatusMessage = "Saved locally (ZLA fallback mode).";
-        }
-        finally
-        {
-            isSyncing = false;
-        }
-    }
-
-    // ── Models ─────────────────────────────────────────────────────────────
-    public class UserStatus
-    {
-        public string UserId { get; set; } = "";
-        public string Tier { get; set; } = "free";
-        public bool IsPro { get; set; }
-        public int SearchesUsed { get; set; }
-        public int? SearchesRemaining { get; set; }
-        public int? DailyLimit { get; set; }
-    }
-
-    public class SearchResultResponse
-    {
-        public string Query { get; set; } = "";
-        public string Mode { get; set; } = "deep_reasoning";
-        public string Synthesis { get; set; } = "";
-        public List<ReasoningStep> ReasoningTrace { get; set; } = new();
-        public List<ClaimItem> Claims { get; set; } = new();
-        public List<EntityItem> Entities { get; set; } = new();
-        public List<DisputeItem> Disputes { get; set; } = new();
-        public List<SourceItem> Sources { get; set; } = new();
-        public string ScreenshotBase64 { get; set; } = "";
-        public string Timestamp { get; set; } = "";
-        public List<InteractiveGrillNode> GrillNodes { get; set; } = new();
-    }
-
-    public class ReasoningStep
-    {
-        public int Step { get; set; }
-        public string Description { get; set; } = "";
-    }
-
-    public class ClaimItem
-    {
-        public string Statement { get; set; } = "";
-        public string VerbatimQuote { get; set; } = "";
-        public string SourceTitle { get; set; } = "";
-        public string SourceUrl { get; set; } = "";
-        public string EpistemicStatus { get; set; } = "Fact";
-        public int ConfidenceScore { get; set; } = 95;
-    }
-
-    public class EntityItem
-    {
-        public string Name { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Description { get; set; } = "";
-    }
-
-    public class DisputeItem
-    {
-        public string Topic { get; set; } = "";
-        public string PerspectiveA { get; set; } = "";
-        public string PerspectiveB { get; set; } = "";
-    }
-
-    public class SourceItem
-    {
-        public string Title { get; set; } = "";
-        public string Url { get; set; } = "";
-        public string Snippet { get; set; } = "";
-    }
-
-    public class EvalResponse
-    {
-        public bool Success { get; set; }
-        public string TargetUrl { get; set; } = "";
-        public string Evaluation { get; set; } = "";
-        public string Timestamp { get; set; } = "";
-        public bool Cached { get; set; }
     }
 }
