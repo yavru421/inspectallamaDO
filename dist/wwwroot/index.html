@@ -6,7 +6,6 @@
     <title>InspectaLlama &bull; Next-Gen AI Web Search Engine</title>
     <base href="/" />
 
-    <!-- PWA & Mobile Standalone Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,29 +14,63 @@
     <link href="manifest.webmanifest" rel="manifest" />
     <link href="InspectaLlamaDO.styles.css" rel="stylesheet" />
 
-    <link href="css/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            100: '#c9d1d9',
+                            200: '#c9d1d9',
+                            300: '#8b949e',
+                            400: '#8b949e',
+                            500: '#8b949e',
+                            600: '#8b949e',
+                            700: '#30363d',
+                            800: '#30363d',
+                            900: '#161b22',
+                            950: '#0d1117',
+                        },
+                        indigo: {
+                            300: '#2ea043',
+                            400: '#238636',
+                            500: '#2ea043',
+                            600: '#238636',
+                        },
+                        cyan: {
+                            300: '#2ea043',
+                            400: '#238636',
+                            500: '#2ea043',
+                            600: '#238636',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="css/app.css" rel="stylesheet" />
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
     <div id="app">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="text-center">
-                <div class="text-5xl mb-4 animate-bounce">🦙🔍</div>
-                <div class="text-indigo-400 font-bold text-lg mb-1">InspectaLlama DO</div>
-                <div class="text-slate-500 font-mono text-xs">Mounting Edge WebAssembly Core...</div>
+        <div class="shotstack-loader">
+            <div class="spinner"></div>
+            <span class="loading-text">Mounting InspectaLlama Edge Core...</span>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: var(--blazor-load-percentage, 0%)"></div>
             </div>
+            <style>
+                .progress-text::after {
+                    content: var(--blazor-load-percentage-text, "0") "%";
+                }
+            </style>
+            <span class="progress-text">Loading... </span>
         </div>
     </div>
 
     <div id="blazor-error-ui" class="hidden fixed bottom-0 left-0 right-0 bg-red-900/90 text-white p-4 text-center text-sm z-50">
         An unhandled error has occurred.
         <a href="" class="underline font-bold ml-2">Reload</a>
-    </div>
-
-    <!-- iOS Add to Home Screen Guidance Prompt -->
-    <div id="ios-pwa-prompt" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.95); color: white; padding: 16px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.3); z-index: 9999; text-align: center; width: 90%; max-width: 400px; font-family: sans-serif;">
-        <p style="margin: 0 0 10px 0; font-size: 14px;">Install InspectaLlama on your iPhone: tap <strong>Share</strong> and select <strong>Add to Home Screen</strong>.</p>
-        <button id="ios-pwa-prompt-close-btn" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold;">Got it</button>
     </div>
 
     <script src="_framework/blazor.webassembly.js"></script>
