@@ -1,14 +1,34 @@
-/* Custom styling additions for InspectaLlama */
+/* Sleek Minimalist Glassmorphic Studio Theme */
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes glassShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .glow-effect {
   animation: pulseGlow 3s infinite ease-in-out;
 }
 
-/* Visual Cyberpunk Edge Branding - Powered by Cloudflare Durable Objects */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-pill {
+  background: rgba(30, 41, 59, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+/* Visual Cyberpunk Edge Branding - Powered by Cloudflare Workers AI */
 .do-power-badge {
   display: inline-flex;
   align-items: center;
@@ -16,8 +36,8 @@
   padding: 0.35rem 0.75rem;
   border-radius: 9999px;
   background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(249, 115, 22, 0.4);
-  box-shadow: 0 0 12px rgba(249, 115, 22, 0.25), inset 0 0 8px rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.25), inset 0 0 8px rgba(99, 102, 241, 0.15);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.725rem;
   color: #cbd5e1;
@@ -27,14 +47,14 @@
 }
 
 .do-power-badge:hover {
-  border-color: rgba(249, 115, 22, 0.8);
-  box-shadow: 0 0 18px rgba(249, 115, 22, 0.45), inset 0 0 12px rgba(249, 115, 22, 0.25);
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 18px rgba(99, 102, 241, 0.45), inset 0 0 12px rgba(99, 102, 241, 0.25);
   transform: translateY(-1px);
 }
 
 .do-bolt {
-  color: #f97316;
-  text-shadow: 0 0 8px rgba(249, 115, 22, 0.8);
+  color: #818cf8;
+  text-shadow: 0 0 8px rgba(99, 102, 241, 0.8);
   animation: pulseGlow 2s infinite ease-in-out;
 }
 
@@ -44,9 +64,54 @@
   color: #94a3b8;
 }
 
-.do-highlight {
-  color: #fb923c;
-  font-weight: 800;
-  text-shadow: 0 0 6px rgba(251, 146, 60, 0.5);
+/* Custom Scrollbar for Research Tabs & Cards */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile Bottom Navigation & Drawer Micro-Animations */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+.drawer-enter {
+  animation: slideUpDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpDrawer {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tickerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); filter: brightness(1.25); }
+  100% { transform: scale(1); }
+}
+
+.animate-ticker-pulse {
+  animation: tickerPulse 0.6s ease-out;
+}
+
+/* Touch Target Optimization for Single-Thumb Mobile */
+.touch-target {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.recommended-glow {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+
 

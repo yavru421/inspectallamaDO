@@ -360,10 +360,16 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
       }
     }
 
-    // Fallback to static asset serving
+    // Fallback to static asset serving with WASM immutable caching
     const response = env.ASSETS ? await env.ASSETS.fetch(request) : new Response('InspectaLlama Edge Router Active', { status: 200 });
     const newHeaders = new Headers(response.headers);
     Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+    
+    // Cache-Control optimization for Wasm & JS bundles
+    if (url.pathname.endsWith('.wasm') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+      newHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
