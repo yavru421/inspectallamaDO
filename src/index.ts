@@ -1,4 +1,4 @@
-import puppeteer from '@cloudflare/puppeteer';
+import { DurableObject } from "cloudflare:workers";
 
 export interface Env {
   MY_BROWSER: Fetcher;
@@ -13,21 +13,18 @@ export interface Env {
 
 const FREE_DAILY_LIMIT = 100;
 
-export class InspectaLlamaDO implements DurableObject {
-  state: DurableObjectState;
-  env: Env;
+export class InspectaLlamaDO extends DurableObject {
   sessions: Set<WebSocket>;
   activeInspectors: Map<string, number> = new Map();
   lastInspectedPrompts: string[] = [];
 
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
     this.sessions = new Set<WebSocket>();
     
     // Load persisted lastInspectedPrompts string array from DO storage
-    this.state.blockConcurrencyWhile(async () => {
-      const storedPrompts = await this.state.storage.get<string[]>('lastInspectedPrompts');
+    this.ctx.blockConcurrencyWhile(async () => {
+      const storedPrompts = await this.ctx.storage.get<string[]>('lastInspectedPrompts');
       if (storedPrompts) {
         this.lastInspectedPrompts = storedPrompts;
       }
@@ -42,7 +39,7 @@ export class InspectaLlamaDO implements DurableObject {
     this.lastInspectedPrompts = [normalized, ...this.lastInspectedPrompts.filter(p => p !== normalized)].slice(0, 200);
     
     // Persist to DO storage non-blockingly
-    this.state.storage.put('lastInspectedPrompts', this.lastInspectedPrompts).catch(err => {
+    this.ctx.storage.put('lastInspectedPrompts', this.lastInspectedPrompts).catch(err => {
       console.log('Error persisting lastInspectedPrompts:', err);
     });
   }
@@ -89,7 +86,7 @@ export class InspectaLlamaDO implements DurableObject {
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
 
-      this.state.acceptWebSocket(server);
+      this.ctx.acceptWebSocket(server);
       this.sessions.add(server);
 
       return new Response(null, { status: 101, webSocket: client });
