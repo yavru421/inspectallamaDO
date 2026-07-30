@@ -5,520 +5,399 @@
 
 <PageTitle>InspectaLlama &bull; Pinnacle Deep Semantic AI Research</PageTitle>
 
-@* ── Pro upgrade success banner ── *@
-@if (showPaymentAlert)
-{
-    <div class="mb-6 p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">🎉</span>
-            <span class="font-bold">Welcome to Inspecta Pro! Your account has been upgraded with unlimited deep search capabilities.</span>
-        </div>
-        <button @onclick="() => showPaymentAlert = false" class="text-emerald-400 hover:text-white font-bold">&times;</button>
-    </div>
-}
-
-@* ── Rate limit reached banner ── *@
-@if (rateLimitHit)
-{
-    <div class="mb-6 p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">⏳</span>
-            <div>
-                <span class="font-bold">Daily free search quota reached.</span>
-                <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc or manage credits on personalization portal.</span>
-            </div>
-        </div>
-        <a href="https://personalization.dondlingergc.com/subscription" target="_blank" 
-           class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition inline-flex items-center gap-1">
-            Upgrade / Add Credits →
-        </a>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="mb-6 p-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">⚠️</span>
-            <div>
-                <span class="font-bold">Search Execution Notice:</span>
-                <span class="ml-2">@errorMessage</span>
-            </div>
-        </div>
-        <button @onclick="() => errorMessage = null" class="text-red-400 hover:text-white font-bold">&times;</button>
-    </div>
-}
-
-<div class="py-6 flex flex-col items-center text-center">
-    <div class="mb-4 flex items-center gap-3">
-        <div class="do-power-badge" title="Stateless edge AI routing powered by Cloudflare Workers AI">
-            <span class="do-bolt">⚡</span>
-            <span class="do-label">POWERED BY <strong class="do-highlight">CLOUDFLARE WORKERS AI</strong></span>
-        </div>
-        <span class="text-xs font-mono text-indigo-400/80">&bull; Llama 3.3 70B Edge Router</span>
-    </div>
-    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-3">
-        Cognitive Research with <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Pinnacle AI Precision</span>
-    </h1>
-    <p class="text-slate-400 max-w-2xl text-sm mb-6">
-        Autonomous web graph traversal, dialectical claim verification, verbatim source audits, and publication-ready PDF intelligence briefs.
-    </p>
-
-    @* ── Main Workbench View Switcher ── *@
-    <div class="mb-4 flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 text-xs font-bold">
-        <button @onclick='() => mainTab = "search"' class="px-4 py-2 rounded-lg transition border @(mainTab == "search" ? "bg-indigo-600 text-white border-indigo-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
-            🧠 Deep Cognitive Research
-        </button>
-        <button @onclick='() => mainTab = "scraper"' class="px-4 py-2 rounded-lg transition border @(mainTab == "scraper" ? "bg-cyan-600 text-white border-cyan-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
-            ⚡ Direct URL Inference Scraper
-        </button>
-    </div>
-
-    @if (mainTab == "search")
-    {
-        @* ── Search Input Form ── *@
-        <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-3">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
-                       placeholder="Ask any complex research question (e.g., 'Durable Objects vs Redis performance and trade-offs')..."
-                       disabled="@(isLoading || rateLimitHit)"
-                       class="w-full bg-transparent px-3 py-2.5 sm:px-4 sm:py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed border border-slate-800 sm:border-0 rounded-xl sm:rounded-none" />
-                <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
-                        class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto">
-                    @if (isLoading)
-                    {
-                        <span class="animate-spin text-sm">🔄</span>
-                        <span>Reasoning...</span>
-                    }
-                    else
-                    {
-                        <span>Inspect 🦙</span>
-                    }
-                </button>
-            </div>
-
-            @* ── Mode Selection & Options ── *@
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-2 py-2 border-t border-slate-800/60 text-xs text-slate-400">
-                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-                    <span class="text-slate-500 font-medium hidden sm:inline">Engine:</span>
-                    <button @onclick='() => selectedMode = "deep_reasoning"'
-                            class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
-                        🧠 Deep Multi-Hop
-                    </button>
-                    <button @onclick='() => selectedMode = "standard"'
-                            class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200")">
-                        ⚡ Instant
-                    </button>
-                </div>
-
-                <div class="flex items-center justify-between w-full sm:w-auto gap-3">
-                    <label class="flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition text-[11px] sm:text-xs">
-                        <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500" />
-                        <span>Deep Multi-Tab</span>
-                    </label>
-
-                    @if (userStatus != null)
-                    {
-                        @if (userStatus.IsPro)
-                        {
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold text-[10px]">
-                                ✦ Pro Pass
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono text-[10px]">
-                                🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
-                            </span>
-                        }
-                    }
-                </div>
-            </div>
-        </div>
-
-        @* ── Presets ── *@
-        <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
-            <span>Try Presets:</span>
-            <button @onclick='() => RunPreset("Cloudflare Workers AI Llama 3.3 70B Edge Router architecture & performance")' class="text-slate-400 hover:text-indigo-400 underline transition">Workers AI Edge</button> &bull;
-            <button @onclick='() => RunPreset("Latest .NET 10 Blazor WASM performance benchmarks")' class="text-slate-400 hover:text-indigo-400 underline transition">.NET 10 WASM</button> &bull;
-            <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
-        </div>
-    }
-    else
-    {
-        @* ── Direct URL Inference Scraper View ── *@
-        <div class="w-full max-w-3xl bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div>
-                    <span class="text-xs text-cyan-400 font-mono uppercase tracking-wide">Stateless Edge Scraper</span>
-                    <h3 class="text-lg font-bold text-white">Inspect Webpage URL Architecture</h3>
-                </div>
-                <span class="text-xs text-slate-500 font-mono">Llama 3.3 70B Edge</span>
-            </div>
-
-            <div class="flex items-center gap-2 mt-1">
-                <input @bind="evalTargetUrl" placeholder="https://example.com"
-                       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
-                <button @onclick="RunUrlEvaluation" disabled="@isEvaluating"
-                        class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm flex items-center gap-2 shrink-0 disabled:opacity-50">
-                    @if (isEvaluating)
-                    {
-                        <span class="animate-spin text-sm">🔄</span>
-                        <span>Auditing...</span>
-                    }
-                    else
-                    {
-                        <span>Run Scraper ⚡</span>
-                    }
-                </button>
-            </div>
-
-            @if (!string.IsNullOrEmpty(evalError))
+<div class="w-full h-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar bg-slate-950" id="app-swiper">
+    
+    @* SCREEN 1: Search & Scraper *@
+    <section id="screen-search" class="w-full h-full shrink-0 snap-center snap-always flex flex-col items-center justify-center p-4 relative overflow-y-auto">
+        <div class="w-full max-w-3xl flex flex-col items-center text-center space-y-6 pt-16 sm:pt-0">
+            
+            @if (showPaymentAlert)
             {
-                <div class="text-xs font-mono text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">
-                    @evalError
-                </div>
-            }
-
-            <div class="mt-2 bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-xs font-mono text-cyan-200/90 whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed shadow-inner">
-                @(string.IsNullOrEmpty(evalResult) ? "Enter a target web URL above and click 'Run Scraper ⚡' to execute an automated architectural audit." : evalResult)
-            </div>
-        </div>
-    }
-</div>
-
-@* ── Search Results & Cognitive Workbench ── *@
-@if (result != null)
-{
-    <div class="mt-8 space-y-6">
-        @* Cognitive Header & Action Toolbar *@
-        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
-            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
-                <div>
+                <div class="w-full p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs border border-indigo-500/30">
-                            @(result.Mode == "deep_reasoning" ? "🧠 Cognitive Multi-Hop Mode" : "⚡ Instant Search")
-                        </span>
-                        <span class="text-slate-500 font-mono text-xs">@result.Timestamp</span>
+                        <span class="text-xl">🎉</span>
+                        <span class="font-bold">Welcome to Inspecta Pro! Your account has been upgraded.</span>
                     </div>
-                    <h2 class="font-bold text-white text-xl mt-1">
-                        Research Objective: "<span class="text-indigo-300">@result.Query</span>"
-                    </h2>
-                </div>
-
-                @* Action Buttons *@
-                <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <button @onclick="GeneratePdfReport" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold px-4 py-2 rounded-xl transition shadow-lg flex items-center gap-1.5">
-                        <span>📄</span>
-                        <span>Export PDF Report</span>
-                    </button>
-                    <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 font-medium transition flex items-center gap-1">
-                        <span>📥</span> Export MD
-                    </button>
-                    <button @onclick="SyncWithPersonalization" disabled="@isSyncing" class="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-2 rounded-xl border border-slate-700 font-medium transition flex items-center gap-1 disabled:opacity-50">
-                        @if (isSyncing)
-                        {
-                            <span class="animate-spin">🔄</span>
-                        }
-                        else
-                        {
-                            <span>☁️ Sync</span>
-                        }
-                    </button>
-                </div>
-            </div>
-
-            @if (!string.IsNullOrEmpty(syncStatusMessage))
-            {
-                <div class="mb-4 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
-                    @syncStatusMessage
+                    <button @onclick="() => showPaymentAlert = false" class="text-emerald-400 font-bold">&times;</button>
                 </div>
             }
 
-            @* ── Navigation Tabs ── *@
-            <div class="flex items-center gap-2 border-b border-slate-800 pb-3 mb-6 overflow-x-auto text-xs font-bold">
-                <button @onclick='() => activeTab = "synthesis"' class="px-4 py-2 rounded-xl transition border @(activeTab == "synthesis" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
-                    ✨ Executive Synthesis
+            @if (rateLimitHit)
+            {
+                <div class="w-full p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">⏳</span>
+                        <div>
+                            <span class="font-bold">Daily free search quota reached.</span>
+                            <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc.</span>
+                        </div>
+                    </div>
+                    <a href="https://personalization.dondlingergc.com/subscription" target="_blank" 
+                       class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition inline-flex items-center gap-1">
+                        Upgrade Pro →
+                    </a>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="w-full p-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">⚠️</span>
+                        <div>
+                            <span class="font-bold">Search Execution Notice:</span>
+                            <span class="ml-2">@errorMessage</span>
+                        </div>
+                    </div>
+                    <button @onclick="() => errorMessage = null" class="text-red-400 font-bold">&times;</button>
+                </div>
+            }
+
+            <div class="flex items-center gap-3">
+                <div class="do-power-badge" title="Stateless edge AI routing powered by Cloudflare Workers AI">
+                    <span class="do-bolt">⚡</span>
+                    <span class="do-label">POWERED BY <strong class="do-highlight">CLOUDFLARE WORKERS AI</strong></span>
+                </div>
+                <span class="text-xs font-mono text-indigo-400/80">&bull; Llama 3.3 70B Edge Router</span>
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight">
+                Cognitive Research with <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Pinnacle AI Precision</span>
+            </h1>
+            <p class="text-slate-400 text-sm">
+                Autonomous web graph traversal, dialectical claim verification, and source audits.
+            </p>
+
+            <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 text-xs font-bold w-full sm:w-auto">
+                <button @onclick='() => mainTab = "search"' class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition border @(mainTab == "search" ? "bg-indigo-600 text-white border-indigo-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+                    🧠 Deep Search
                 </button>
-                <button @onclick='() => activeTab = "claims"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "claims" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
-                    <span>🔍 Verified Claims Matrix</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Claims.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Claims.Count</span>
-                </button>
-                <button @onclick='() => activeTab = "entities"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "entities" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
-                    <span>🌐 Entity Knowledge Graph</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Entities.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Entities.Count</span>
-                </button>
-                <button @onclick='() => activeTab = "disputes"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "disputes" ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white")">
-                    <span>⚡ Trade-offs &amp; Disputes</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] @(result.Disputes.Count > 0 ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" : "bg-slate-800/60 text-slate-500")">@result.Disputes.Count</span>
-                </button>
-                <button @onclick='() => activeTab = "grill"' class="px-4 py-2 rounded-xl transition border flex items-center gap-1.5 @(activeTab == "grill" ? "bg-gradient-to-r from-amber-500 to-indigo-600 text-white border-amber-400 shadow-md font-bold" : "bg-slate-950/60 text-amber-300 border-amber-500/30 hover:border-amber-400")">
-                    <span>🎯 Stepper (/grill-me)</span>
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">@result.GrillNodes.Count</span>
+                <button @onclick='() => mainTab = "scraper"' class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition border @(mainTab == "scraper" ? "bg-cyan-600 text-white border-cyan-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+                    ⚡ URL Scraper
                 </button>
             </div>
 
-            @* Tab 1: Executive Synthesis *@
-            @if (activeTab == "synthesis")
+            @if (mainTab == "search")
             {
-                <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
-                    @result.Synthesis
+                <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
+                               placeholder="Ask any complex research question..."
+                               disabled="@(isLoading || rateLimitHit)"
+                               class="w-full bg-transparent px-3 py-2.5 sm:px-4 sm:py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed border border-slate-800 sm:border-0 rounded-xl sm:rounded-none" />
+                        <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
+                                class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto">
+                            @if (isLoading)
+                            {
+                                <span class="animate-spin text-sm">🔄</span>
+                                <span>Reasoning...</span>
+                            }
+                            else
+                            {
+                                <span>Inspect 🦙</span>
+                            }
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-2 py-2 border-t border-slate-800/60 text-xs text-slate-400">
+                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+                            <span class="text-slate-500 font-medium hidden sm:inline">Engine:</span>
+                            <button @onclick='() => selectedMode = "deep_reasoning"'
+                                    class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400")">
+                                🧠 Deep Multi-Hop
+                            </button>
+                            <button @onclick='() => selectedMode = "standard"'
+                                    class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400")">
+                                ⚡ Instant
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+                            <label class="flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition text-[11px] sm:text-xs">
+                                <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600" />
+                                <span>Deep Multi-Tab</span>
+                            </label>
+                            @if (userStatus != null)
+                            {
+                                @if (userStatus.IsPro)
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold text-[10px]">
+                                        ✦ Pro Pass
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono text-[10px]">
+                                        🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
                 </div>
 
-                @if (result.ReasoningTrace.Any())
-                {
-                    <div class="mt-6 pt-4 border-t border-slate-800">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cognitive Reasoning Trace</h4>
-                        <div class="space-y-1.5">
-                            @foreach (var step in result.ReasoningTrace)
+                <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
+                    <span>Try Presets:</span>
+                    <button @onclick='() => RunPreset("Cloudflare Workers AI Llama 3.3 70B Edge Router")' class="text-slate-400 hover:text-indigo-400 underline transition">Workers AI Edge</button> &bull;
+                    <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
+                </div>
+            }
+            else
+            {
+                <div class="w-full bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 text-left">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div>
+                            <span class="text-xs text-cyan-400 font-mono uppercase tracking-wide">Stateless Edge Scraper</span>
+                            <h3 class="text-lg font-bold text-white">Inspect Webpage URL Architecture</h3>
+                        </div>
+                        <span class="text-xs text-slate-500 font-mono">Llama 3.3</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-2 mt-1">
+                        <input @bind="evalTargetUrl" placeholder="https://example.com"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+                        <button @onclick="RunUrlEvaluation" disabled="@isEvaluating"
+                                class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shrink-0 disabled:opacity-50">
+                            @if (isEvaluating)
                             {
-                                <div class="text-xs text-slate-400 flex items-center gap-2">
-                                    <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-mono font-bold shrink-0">@step.Step</span>
-                                    <span>@step.Description</span>
+                                <span class="animate-spin text-sm">🔄</span>
+                                <span>Auditing...</span>
+                            }
+                            else
+                            {
+                                <span>Run Scraper ⚡</span>
+                            }
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(evalError))
+                    {
+                        <div class="text-xs font-mono text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">
+                            @evalError
+                        </div>
+                    }
+
+                    <div class="mt-2 bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-xs font-mono text-cyan-200/90 whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed shadow-inner">
+                        @(string.IsNullOrEmpty(evalResult) ? "Enter a target web URL above and click 'Run Scraper ⚡' to execute an automated architectural audit." : evalResult)
+                    </div>
+                </div>
+            }
+            
+            @if (result != null)
+            {
+                <div class="mt-4 animate-bounce text-slate-500 flex flex-col items-center gap-1">
+                    <span class="text-xs font-bold uppercase tracking-wider">Swipe to view insights</span>
+                    <span>→</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    @if (result != null)
+    {
+        @* SCREEN 2: Synthesis *@
+        <section id="screen-synthesis" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+            <div class="max-w-4xl mx-auto w-full space-y-6">
+                <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs border border-indigo-500/30">
+                                    @(result.Mode == "deep_reasoning" ? "🧠 Cognitive Multi-Hop Mode" : "⚡ Instant Search")
+                                </span>
+                                <span class="text-slate-500 font-mono text-xs">@result.Timestamp</span>
+                            </div>
+                            <h2 class="font-bold text-white text-xl sm:text-2xl mt-2">
+                                Research Objective: "<span class="text-indigo-300">@result.Query</span>"
+                            </h2>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <button @onclick="GeneratePdfReport" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <span>📄 PDF</span>
+                            </button>
+                            <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl transition">
+                                📥 MD
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Executive Synthesis</h3>
+                    <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
+                        @result.Synthesis
+                    </div>
+
+                    @if (result.ReasoningTrace.Any())
+                    {
+                        <div class="mt-8 pt-6 border-t border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Cognitive Reasoning Trace</h4>
+                            <div class="space-y-2">
+                                @foreach (var step in result.ReasoningTrace)
+                                {
+                                    <div class="text-xs text-slate-400 flex items-start gap-2">
+                                        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-mono font-bold shrink-0 mt-0.5">@step.Step</span>
+                                        <span class="leading-relaxed">@step.Description</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+
+        @* SCREEN 3: Data Matrix (Claims & Entities) *@
+        <section id="screen-data" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+            <div class="max-w-5xl mx-auto w-full space-y-8">
+                
+                @if (result.Claims.Any())
+                {
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span>🔍 Verified Claims Matrix</span>
+                            <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px]">@result.Claims.Count</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var claim in result.Claims)
+                            {
+                                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-2 gap-2">
+                                            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] @GetEpistemicBadgeClass(claim.EpistemicStatus)">
+                                                @claim.EpistemicStatus
+                                            </span>
+                                            <span class="text-xs font-bold text-slate-300 flex items-center gap-1">
+                                                @claim.ConfidenceScore%
+                                                <div class="w-8 bg-slate-800 h-1.5 rounded-full overflow-hidden ml-1">
+                                                    <div class="bg-indigo-500 h-full" style="width: @(claim.ConfidenceScore)%"></div>
+                                                </div>
+                                            </span>
+                                        </div>
+                                        <p class="font-semibold text-slate-100 text-sm">@claim.Statement</p>
+                                        <p class="font-mono text-[10px] text-slate-400 italic bg-slate-950/40 p-2 rounded mt-2 border border-slate-800">
+                                            "@claim.VerbatimQuote"
+                                        </p>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px]">
+                                        <a href="@claim.SourceUrl" target="_blank" class="text-indigo-400 hover:underline truncate max-w-[200px]">@claim.SourceTitle</a>
+                                        <button @onclick='() => RunPreset($"Deep research details on {claim.Statement}")' class="px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 transition">
+                                            Sub-Crawl
+                                        </button>
+                                    </div>
                                 </div>
                             }
                         </div>
                     </div>
                 }
-            }
 
-            @* Tab 2: Verified Claims Matrix *@
-            @if (activeTab == "claims")
-            {
-                <div>
-                    @if (result.Claims.Any())
-                    {
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs border-collapse">
-                                <thead>
-                                    <tr class="border-b border-slate-800 text-slate-400 font-bold bg-slate-950/50">
-                                        <th class="p-3">Verified Statement</th>
-                                        <th class="p-3">Verbatim Source Quote</th>
-                                        <th class="p-3">Source &amp; Citation</th>
-                                        <th class="p-3">Epistemic Status</th>
-                                        <th class="p-3">Confidence</th>
-                                        <th class="p-3 text-right">Drill-Down</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var claim in result.Claims)
-                                    {
-                                        <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition">
-                                            <td class="p-3 font-semibold text-slate-100 max-w-xs">@claim.Statement</td>
-                                            <td class="p-3 font-mono text-[11px] text-slate-300 italic bg-slate-950/40 rounded-lg max-w-xs">
-                                                "@claim.VerbatimQuote"
-                                            </td>
-                                            <td class="p-3 max-w-xs truncate">
-                                                <a href="@claim.SourceUrl" target="_blank" class="text-indigo-400 hover:underline font-medium">@claim.SourceTitle</a>
-                                            </td>
-                                            <td class="p-3">
-                                                <span class="px-2 py-0.5 rounded-full font-bold text-[10px] @GetEpistemicBadgeClass(claim.EpistemicStatus)">
-                                                    @claim.EpistemicStatus
-                                                </span>
-                                            </td>
-                                            <td class="p-3 font-bold text-slate-200">
-                                                <div class="flex items-center gap-1.5">
-                                                    <span>@claim.ConfidenceScore%</span>
-                                                    <div class="w-12 bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                                        <div class="bg-indigo-500 h-full" style="width: @(claim.ConfidenceScore)%"></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="p-3 text-right">
-                                                <button @onclick='() => RunPreset($"Deep research details on {claim.Statement}")' class="px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 font-medium transition text-[11px]">
-                                                    🔍 Sub-Crawl
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-8 text-slate-400 text-sm">
-                            No structured claims extracted for this query. Try turning on 🧠 <strong>Deep Cognitive Multi-Hop Mode</strong>.
-                        </div>
-                    }
-                </div>
-            }
-
-            @* Tab 3: Entity Knowledge Graph *@
-            @if (activeTab == "entities")
-            {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach (var entity in result.Entities)
-                    {
-                        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between gap-2 mb-2">
-                                    <h4 class="font-bold text-indigo-300 text-sm">@entity.Name</h4>
-                                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-semibold">@entity.Category</span>
+                @if (result.Entities.Any())
+                {
+                    <div class="pt-4 border-t border-slate-800/50">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span>🌐 Entity Knowledge Graph</span>
+                            <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px]">@result.Entities.Count</span>
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            @foreach (var entity in result.Entities)
+                            {
+                                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between gap-2 mb-2">
+                                            <h4 class="font-bold text-indigo-300 text-sm">@entity.Name</h4>
+                                            <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-400 text-[9px] font-semibold uppercase">@entity.Category</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-300 leading-relaxed">@entity.Description</p>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-slate-300 leading-relaxed">@entity.Description</p>
-                            </div>
-                            <button @onclick='() => RunPreset($"Deep dive architecture and benchmarks for {entity.Name}")' class="mt-3 text-left text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition">
-                                Explore Entity Graph →
-                            </button>
-                        </div>
-                    }
-                </div>
-            }
-
-            @* Tab 4: Trade-offs & Disputes *@
-            @if (activeTab == "disputes")
-            {
-                <div class="space-y-4">
-                    @foreach (var dispute in result.Disputes)
-                    {
-                        <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
-                            <h4 class="font-bold text-amber-300 text-sm mb-3 flex items-center gap-2">
-                                <span>⚡ Dialectical Dispute:</span>
-                                <span>@dispute.Topic</span>
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                    <div class="font-bold text-emerald-300 mb-1">Perspective A / Advantage</div>
-                                    <div class="text-slate-300 leading-relaxed">@dispute.PerspectiveA</div>
-                                </div>
-                                <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                                    <div class="font-bold text-red-300 mb-1">Perspective B / Trade-off</div>
-                                    <div class="text-slate-300 leading-relaxed">@dispute.PerspectiveB</div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-
-            @* Tab 5: /grill-me Interactive Stepper Nodes *@
-            @if (activeTab == "grill")
-            {
-                <div class="space-y-6 pb-20 sm:pb-8">
-                    <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-600/15 to-cyan-500/15 border border-amber-500/40 text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl animate-pulse">🎯</span>
-                            <div>
-                                <span class="font-extrabold text-sm text-white">Interactive /grill-me Decision Engine</span>
-                                <p class="text-slate-300 text-xs mt-0.5">The Llama 3.3 70B AI engine paused at key research branches. Select your preferred options below to instantly trigger a downstream edge hop.</p>
-                            </div>
-                        </div>
-                        <div class="shrink-0 font-mono text-[11px] bg-amber-500/20 px-3 py-1.5 rounded-xl border border-amber-400/40 text-amber-300 font-bold">
-                            ⚡ Zero-Liability Edge Loop
+                            }
                         </div>
                     </div>
+                }
+            </div>
+        </section>
 
-                    @if (result.GrillNodes != null && result.GrillNodes.Any())
-                    {
+        @* SCREEN 4: The /grill-me Stepper Deck *@
+        <section id="screen-grill" class="w-full h-full shrink-0 snap-center snap-always flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-y-auto hide-scrollbar bg-slate-950">
+            <div class="max-w-2xl w-full space-y-6 pt-16 sm:pt-0">
+                <div class="text-center mb-8">
+                    <span class="text-4xl mb-3 block animate-pulse">🎯</span>
+                    <h3 class="font-black text-2xl text-white tracking-tight">Interactive Decision Engine</h3>
+                    <p class="text-sm text-slate-400 mt-2">The AI paused at key research branches. Swipe through the deck and select your preferred paths for downstream evaluation.</p>
+                </div>
+
+                @if (result.GrillNodes != null && result.GrillNodes.Any())
+                {
+                    <div class="w-full flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 hide-scrollbar scroll-smooth">
                         @foreach (var node in result.GrillNodes)
                         {
-                            <div class="p-4 sm:p-6 rounded-2xl bg-slate-950/90 border @(node.IsResolved ? "border-emerald-500/50 shadow-emerald-500/10" : "border-amber-500/50 shadow-amber-500/10") shadow-2xl space-y-4">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold font-mono @(node.IsResolved ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-amber-500/20 text-amber-300 border border-amber-500/40")">
-                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Branch Selected" : "⏳ Awaiting Single-Tap Analyst Selection")
+                            <div class="w-[90%] sm:w-full shrink-0 snap-center snap-always p-5 sm:p-6 rounded-2xl bg-slate-900 border @(node.IsResolved ? "border-emerald-500/50" : "border-amber-500/50") shadow-2xl space-y-4 flex flex-col">
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-bold font-mono @(node.IsResolved ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300")">
+                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Resolved" : "⏳ Awaiting Selection")
                                     </span>
                                     @if (!string.IsNullOrEmpty(node.SelectedOption))
                                     {
-                                        <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 truncate max-w-xs">
-                                            ✓ Active: @node.SelectedOption
+                                        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 truncate max-w-[150px]">
+                                            @node.SelectedOption
                                         </span>
                                     }
                                 </div>
                                 
-                                <div>
-                                    <h4 class="font-black text-white text-lg sm:text-xl tracking-tight mb-1">@node.Title</h4>
-                                    <p class="text-sm text-slate-300 leading-relaxed font-medium">@node.ContextQuestion</p>
+                                <div class="flex-1">
+                                    <h4 class="font-black text-white text-lg sm:text-xl tracking-tight mb-2">@node.Title</h4>
+                                    <p class="text-sm text-slate-300 leading-relaxed">@node.ContextQuestion</p>
                                 </div>
 
-                                <div class="grid grid-cols-1 gap-3 pt-2">
+                                <div class="grid grid-cols-1 gap-2 mt-auto pt-4">
                                     @foreach (var opt in node.Options)
                                     {
                                         var isCurrentSelected = node.SelectedOption == opt.Text;
                                         <div @onclick='() => SelectGrillOption(node, opt)'
-                                             class="touch-target p-4 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 select-none @(isCurrentSelected ? "bg-indigo-600/30 border-indigo-400 text-white shadow-xl ring-2 ring-indigo-500/50 scale-[1.01]" : opt.IsRecommended ? "bg-amber-500/10 border-amber-500/50 hover:border-amber-400 text-slate-100 recommended-glow" : "bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-300")">
-                                            <div class="space-y-1 pr-2">
+                                             class="touch-target p-3 rounded-xl border transition cursor-pointer select-none @(isCurrentSelected ? "bg-indigo-600/30 border-indigo-400 text-white ring-1 ring-indigo-500" : opt.IsRecommended ? "bg-amber-500/10 border-amber-500/40 hover:border-amber-400" : "bg-slate-950/80 border-slate-800 hover:border-slate-700") flex items-center justify-between gap-3">
+                                            <div class="space-y-1">
                                                 <div class="flex items-center gap-2">
                                                     @if (opt.IsRecommended)
                                                     {
-                                                        <span class="px-2.5 py-0.5 rounded-md bg-amber-500/30 text-amber-300 font-black text-[10px] uppercase tracking-wider border border-amber-400/50 flex items-center gap-1 shadow-sm">
-                                                            ★ Recommended
-                                                        </span>
+                                                        <span class="px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300 font-black text-[9px] uppercase shadow-sm">★</span>
                                                     }
-                                                    <span class="font-bold text-sm sm:text-base text-white">@opt.Text</span>
+                                                    <span class="font-bold text-sm text-slate-200">@opt.Text</span>
                                                 </div>
-                                                <p class="text-xs text-slate-400 leading-snug">@opt.Rationale</p>
                                             </div>
-                                            <button class="w-full sm:w-auto touch-target px-4 py-2 rounded-xl text-xs font-black transition shrink-0 flex items-center justify-center gap-1.5 shadow-md @(isCurrentSelected ? "bg-indigo-500 text-white" : opt.IsRecommended ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold" : "bg-slate-800 hover:bg-slate-700 text-slate-200")">
-                                                <span>@(isCurrentSelected ? "✓ Branch Selected" : "Select Branch →")</span>
-                                            </button>
+                                            <div class="shrink-0">
+                                                @if (isCurrentSelected) { <span class="text-indigo-300 font-bold">✓</span> }
+                                            </div>
                                         </div>
                                     }
                                 </div>
                             </div>
                         }
-
-                        <div class="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
-                            <span class="text-xs text-slate-400 font-mono">
-                                Resolved (@result.GrillNodes.Count(n => n.IsResolved)/@result.GrillNodes.Count) decision nodes ready for downstream edge evaluation.
-                            </span>
-                            <button @onclick="ExecuteGrillDownstreamHop" disabled="@(isLoading || !result.GrillNodes.Any(n => n.IsResolved))"
-                                    class="w-full sm:w-auto touch-target bg-gradient-to-r from-amber-500 via-indigo-600 to-cyan-500 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black px-6 py-3.5 rounded-2xl transition shadow-2xl flex items-center justify-center gap-2 text-sm sm:text-base">
-                                @if (isLoading)
-                                {
-                                    <span class="animate-spin">🔄</span>
-                                    <span>Evaluating Edge Hop...</span>
-                                }
-                                else
-                                {
-                                    <span>🚀 Execute Downstream Edge Hop (@result.GrillNodes.Count(n => n.IsResolved))</span>
-                                }
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-12 bg-slate-950/60 border border-slate-800 rounded-2xl p-6">
-                            <span class="text-3xl mb-2 block">🎯</span>
-                            <h4 class="font-bold text-white text-base">No Active Stepper Nodes</h4>
-                            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Run a research query in 🧠 <strong>Deep Multi-Hop Mode</strong> to generate real-time dialectical decision nodes.</p>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-
-        @* Screenshot & Audited Sources Matrix *@
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
-                    <span>🌐 Audited Search Sources</span>
-                </h3>
-                <div class="space-y-3">
-                    @foreach (var src in result.Sources)
-                    {
-                        <a href="@src.Url" target="_blank" class="block p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800/60 border border-slate-800 transition">
-                            <div class="font-semibold text-indigo-300 text-sm truncate">@src.Title</div>
-                            <div class="text-xs text-slate-400 line-clamp-2 mt-1">@src.Snippet</div>
-                        </a>
-                    }
-                </div>
-            </div>
-
-            @if (!string.IsNullOrEmpty(result.ScreenshotBase64))
-            {
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
-                    <h3 class="font-bold text-slate-200 text-base mb-4 flex items-center gap-2">
-                        <span>📸 Edge Browser Screenshot Capture</span>
-                    </h3>
-                    <div class="flex-1 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
-                        <img src="data:image/jpeg;base64,@result.ScreenshotBase64" alt="Web Inspection Preview" class="w-full h-auto object-cover" />
                     </div>
-                </div>
-            }
-        </div>
-    </div>
-}
+
+                    <div class="flex justify-center mt-6">
+                        <button @onclick="ExecuteGrillDownstreamHop" disabled="@(isLoading || !result.GrillNodes.Any(n => n.IsResolved))"
+                                class="w-full sm:w-auto touch-target bg-gradient-to-r from-amber-500 via-indigo-600 to-cyan-500 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black px-8 py-4 rounded-full transition shadow-2xl flex items-center justify-center gap-2 text-base">
+                            @if (isLoading)
+                            {
+                                <span class="animate-spin">🔄</span>
+                                <span>Evaluating Edge Hop...</span>
+                            }
+                            else
+                            {
+                                <span>🚀 Execute Edge Hop (@result.GrillNodes.Count(n => n.IsResolved))</span>
+                            }
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <h4 class="font-bold text-white text-base">No Active Stepper Nodes</h4>
+                        <p class="text-xs text-slate-400 mt-1">Run a query in 🧠 Deep Multi-Hop Mode.</p>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</div>
+
 
 @code {
     private string searchQuery = "";
