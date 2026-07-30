@@ -29,10 +29,10 @@
     </button>
 </div>
 
-<div class="w-full h-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar bg-slate-950" id="app-swiper">
+<div class="w-full h-full flex flex-col overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar bg-slate-950" id="app-swiper">
     
     @* SCREEN 1: Search & Scraper *@
-    <section id="screen-search" class="w-full h-full shrink-0 snap-center snap-always flex flex-col items-center justify-center p-4 relative overflow-y-auto">
+    <section id="screen-search" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-y-auto">
         <div class="w-full max-w-3xl flex flex-col items-center text-center space-y-6 pt-16 sm:pt-0">
             
             @if (showPaymentAlert)
@@ -207,13 +207,13 @@
             }
             
             <div class="mt-4 animate-pulse text-slate-400 flex flex-col items-center gap-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Swipe right to explore results & stepper deck →</span>
+                <span class="text-xs font-bold uppercase tracking-wider">Scroll down or tap floating dock below to explore screens ↓</span>
             </div>
         </div>
     </section>
 
     @* SCREEN 2: Synthesis *@
-    <section id="screen-synthesis" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+    <section id="screen-synthesis" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-y-auto hide-scrollbar">
         <div class="max-w-4xl mx-auto w-full space-y-6">
             @if (result != null)
             {
@@ -279,7 +279,7 @@
     </section>
 
     @* SCREEN 3: Data Matrix (Claims & Entities) *@
-    <section id="screen-data" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 pt-24 pb-20 relative overflow-y-auto hide-scrollbar">
+    <section id="screen-data" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-y-auto hide-scrollbar">
         <div class="max-w-5xl mx-auto w-full space-y-8">
             @if (result != null)
             {
@@ -361,7 +361,7 @@
     </section>
 
     @* SCREEN 4: The /grill-me Stepper Deck *@
-    <section id="screen-grill" class="w-full h-full shrink-0 snap-center snap-always flex flex-col p-4 sm:p-8 relative overflow-hidden bg-[var(--bg-darker)]">
+    <section id="screen-grill" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-hidden bg-[var(--bg-darker)]">
         <div class="max-w-3xl mx-auto w-full h-full flex flex-col pt-16 sm:pt-0 justify-center">
             <div class="text-center mb-6 shrink-0">
                 <span class="text-4xl mb-3 block animate-pulse">🎯</span>
