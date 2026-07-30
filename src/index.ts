@@ -89,25 +89,220 @@ export default {
       });
     }
 
-    // 3. Stateless Edge Streaming / Direct Evaluation Endpoint
-    if (url.pathname === '/api/generate' && request.method === 'POST') {
+    // 3. Main Search Engine Route
+    if (url.pathname === '/api/search' && request.method === 'POST') {
       try {
-        const { prompt, systemPrompt } = await request.json() as { prompt: string; systemPrompt?: string };
+        const { query, deepCrawl = true, mode = 'deep_reasoning' } = await request.json() as { query: string; deepCrawl?: boolean; mode?: string };
+
+        let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
+        let deepContentText = '';
+
+        // Multi-Engine Web Search (DuckDuckGo + Wikipedia API)
+        const getSearchResults = async (q: string) => {
+          const results: Array<{ title: string; url: string; snippet: string }> = [];
+          
+          try {
+            const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&utf8=&format=json`;
+            const wikiRes = await fetch(wikiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const wikiData = await wikiRes.json() as any;
+            if (wikiData?.query?.search && Array.isArray(wikiData.query.search)) {
+              for (const item of wikiData.query.search.slice(0, 4)) {
+                const snippetText = item.snippet.replace(/<[^>]+>/g, '').trim();
+                results.push({
+                  title: item.title,
+                  url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+                  snippet: snippetText
+                });
+              }
+            }
+          } catch (_) {}
+
+          try {
+            const jsonUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`;
+            const jsonRes = await fetch(jsonUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const jsonData = await jsonRes.json() as any;
+            if (jsonData?.RelatedTopics && Array.isArray(jsonData.RelatedTopics)) {
+              for (const topic of jsonData.RelatedTopics) {
+                if (topic.FirstURL && topic.Text && results.length < 6) {
+                  results.push({
+                    title: topic.Text.split(' - ')[0] || topic.Text.slice(0, 50),
+                    url: topic.FirstURL,
+                    snippet: topic.Text
+                  });
+                }
+              }
+            }
+          } catch (_) {}
+
+          return results;
+        };
+
+        searchResults = await getSearchResults(query);
+
+        if (searchResults.length === 0) {
+          searchResults = [
+            {
+              title: `Research Topic: ${query}`,
+              url: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`,
+              snippet: `Comprehensive AI synthesis on "${query}".`
+            }
+          ];
+        }
+
+        if (mode === 'deep_reasoning') {
+          if (deepCrawl && searchResults.length > 0) {
+            const crawlTargets = searchResults.slice(0, 3);
+            const pageContents = await Promise.all(
+              crawlTargets.map(async (target) => {
+                try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 3000);
+                  const res = await fetch(target.url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                    signal: controller.signal
+                  });
+                  clearTimeout(timeoutId);
+                  const html = await res.text();
+                  const cleanText = html.replace(/<script\b[^<]*>[\s\S]*?<\/script>/gi, '')
+                                       .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, '')
+                                       .replace(/<[^>]+>/g, ' ')
+                                       .replace(/\s+/g, ' ')
+                                       .slice(0, 2500);
+                  return `--- SOURCE: ${target.title} (${target.url}) ---\n${cleanText}`;
+                } catch (e) {
+                  return `--- SOURCE: ${target.title} (${target.url}) ---\n(Extracted from snippet: ${target.snippet})`;
+                }
+              })
+            );
+            deepContentText = pageContents.join('\n\n');
+          }
+
+          const fullPrompt = `USER OBJECTIVE: "${query}"
+
+PRIMARY SEARCH SOURCES:
+${searchResults.map(r => `• ${r.title} (${r.url}): ${r.snippet}`).join('\n')}
+
+DEEP SCRAPED EXTRACTS:
+${deepContentText}
+
+INSTRUCTIONS:
+You are InspectaLlama, a world-class Edge AI Research Engine. Synthesize an exhaustive, publication-grade markdown research report for "${query}". Break down the topic into structured sections.
+
+Output ONLY valid JSON matching this schema:
+{
+  "executiveSummary": "# Research Synthesis: ${query}\\n\\nWrite an exhaustive markdown report with rich headers, detailed explanations, and technical depth.",
+  "reasoningTrace": [{"step": 1, "description": "Information retrieval and claim verification"}],
+  "claims": [{"statement": "Verified claim", "verbatimQuote": "Direct quote", "sourceTitle": "${searchResults[0]?.title || 'Source'}", "sourceUrl": "${searchResults[0]?.url || 'URL'}", "epistemicStatus": "Fact", "confidenceScore": 95}],
+  "entities": [{"name": "${query}", "category": "Concept", "description": "Primary research objective"}],
+  "disputes": [{"topic": "Key trade-off", "perspectiveA": "Advantage", "perspectiveB": "Limitation"}]
+}`;
+
+          let aiResponse: any = null;
+          try {
+            aiResponse = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+              messages: [
+                { role: 'system', content: 'Output strictly valid JSON with no markdown wrapping.' },
+                { role: 'user', content: fullPrompt }
+              ]
+            });
+          } catch (modelErr) {
+            try {
+              aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+                messages: [
+                  { role: 'system', content: 'Output strictly valid JSON with no markdown wrapping.' },
+                  { role: 'user', content: fullPrompt }
+                ]
+              });
+            } catch (_) {
+              aiResponse = { response: JSON.stringify({ executiveSummary: `Research results for "${query}":\n\n` + searchResults.map(s => `• ${s.title}: ${s.snippet}`).join('\n\n') }) };
+            }
+          }
+
+          let parsedData: any = null;
+          try {
+            let str = aiResponse?.response || '';
+            if (typeof str === 'object') str = JSON.stringify(str);
+            const firstBrace = str.indexOf('{');
+            const lastBrace = str.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1) str = str.substring(firstBrace, lastBrace + 1);
+            parsedData = JSON.parse(str);
+          } catch (_) {
+            parsedData = {
+              executiveSummary: typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.',
+              reasoningTrace: [{ step: 1, description: "Standard cognitive reasoning completed." }],
+              claims: [],
+              entities: [],
+              disputes: []
+            };
+          }
+
+          return new Response(JSON.stringify({
+            query,
+            mode: 'deep_reasoning',
+            synthesis: parsedData.executiveSummary || parsedData.synthesis || 'Synthesis complete.',
+            reasoningTrace: Array.isArray(parsedData.reasoningTrace) ? parsedData.reasoningTrace : [{ step: 1, description: "Cognitive reasoning completed." }],
+            claims: Array.isArray(parsedData.claims) ? parsedData.claims : [],
+            entities: Array.isArray(parsedData.entities) ? parsedData.entities : [],
+            disputes: Array.isArray(parsedData.disputes) ? parsedData.disputes : [],
+            sources: searchResults,
+            timestamp: new Date().toISOString()
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+        } else {
+          const contextText = searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
+          const fullPrompt = `User Query: "${query}"\n\nSearch Snippets:\n${contextText}`;
+
+          let aiResponse: any = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: [
+              { role: 'system', content: 'You are InspectaLlama, an elite AI search engine. Synthesize a complete, structured response.' },
+              { role: 'user', content: fullPrompt }
+            ]
+          });
+
+          return new Response(JSON.stringify({
+            query,
+            mode: 'standard',
+            synthesis: aiResponse?.response || 'Synthesis completed.',
+            reasoningTrace: [],
+            claims: [],
+            entities: [],
+            disputes: [],
+            sources: searchResults,
+            timestamp: new Date().toISOString()
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message || 'Search execution failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
+    // 4. Direct Evaluation Endpoint
+    if (url.pathname === '/api/eval' && request.method === 'POST') {
+      try {
+        const { targetUrl } = await request.json() as { targetUrl: string };
+        const pageRes = await fetch(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const html = await pageRes.text();
+        const textContent = html.replace(/<script\b[^<]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').slice(0, 3000);
+
         const aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
           messages: [
-            { role: 'system', content: systemPrompt || 'You are a stateless edge AI router.' },
-            { role: 'user', content: prompt }
+            { role: 'system', content: 'Analyze the target web content and synthesize a short evaluation.' },
+            { role: 'user', content: `URL: ${targetUrl}\nContent:\n${textContent}` }
           ]
         });
-        return new Response(JSON.stringify({ success: true, response: aiRes.response || aiRes }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          targetUrl,
+          evaluation: aiRes.response || 'Evaluation completed.',
+          timestamp: new Date().toISOString()
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
 
-    // 4. Visual Sequential Thinking / Forking Edge Router
+    // 5. Visual Sequential Thinking / Forking Edge Router
     if (url.pathname === '/api/forks' && request.method === 'POST') {
       try {
         const { context } = await request.json() as { context: string };
