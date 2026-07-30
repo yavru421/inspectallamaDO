@@ -1,117 +1,27 @@
-/* Sleek Minimalist Glassmorphic Studio Theme */
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.02); }
+:root {
+    --bg-darker: #0d1117;
+    --bg-panel: #161b22;
+    --border-dim: #30363d;
+    --brand-accent: #238636;
+    --brand-accent-hover: #2ea043;
+    --text-white: #c9d1d9;
+    --text-dark-muted: #8b949e;
+    --glass-bg: rgba(22, 27, 34, 0.7);
 }
 
-@keyframes glassShimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.shotstack-loader { display: flex; flex-direction: column; align-items: center; gap: 16px; justify-content: center; height: 100vh; background: var(--bg-darker); font-family: system-ui, -apple-system, sans-serif; color: var(--text-white); }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--border-dim); border-top-color: var(--brand-accent); border-radius: 50%; animation: spin 1s linear infinite; }
+.shotstack-loader .loading-text { font-size: 1.05rem; font-weight: 500; letter-spacing: 0.5px; color: var(--text-white); }
+.shotstack-loader .progress-bar-container { width: 200px; height: 6px; background: var(--border-dim); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.shotstack-loader .progress-bar-fill { height: 100%; background: var(--brand-accent); width: var(--blazor-load-percentage, 0%); border-radius: 3px; transition: width 0.1s ease; }
+.shotstack-loader .progress-text::after { content: var(--blazor-load-percentage-text, "Loading..."); font-size: 0.85rem; color: var(--text-dark-muted); font-weight: 600; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Fix scrollbars for hide-scrollbar class */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
 }
-
-.glow-effect {
-  animation: pulseGlow 3s infinite ease-in-out;
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
-
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.glass-pill {
-  background: rgba(30, 41, 59, 0.65);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
-}
-
-/* Visual Cyberpunk Edge Branding - Powered by Cloudflare Workers AI */
-.do-power-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.25), inset 0 0 8px rgba(99, 102, 241, 0.15);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.725rem;
-  color: #cbd5e1;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-  user-select: none;
-}
-
-.do-power-badge:hover {
-  border-color: rgba(99, 102, 241, 0.8);
-  box-shadow: 0 0 18px rgba(99, 102, 241, 0.45), inset 0 0 12px rgba(99, 102, 241, 0.25);
-  transform: translateY(-1px);
-}
-
-.do-bolt {
-  color: #818cf8;
-  text-shadow: 0 0 8px rgba(99, 102, 241, 0.8);
-  animation: pulseGlow 2s infinite ease-in-out;
-}
-
-.do-label {
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: #94a3b8;
-}
-
-/* Custom Scrollbar for Research Tabs & Cards */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Mobile Bottom Navigation & Drawer Micro-Animations */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 12px);
-}
-
-.drawer-enter {
-  animation: slideUpDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes slideUpDrawer {
-  from {
-    transform: translateY(100%);
-    opacity: 0.8;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes tickerPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); filter: brightness(1.25); }
-  100% { transform: scale(1); }
-}
-
-.animate-ticker-pulse {
-  animation: tickerPulse 0.6s ease-out;
-}
-
-/* Touch Target Optimization for Single-Thumb Mobile */
-.touch-target {
-  min-height: 44px;
-  touch-action: manipulation;
-}
-
-.recommended-glow {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
-}
-
-
-
