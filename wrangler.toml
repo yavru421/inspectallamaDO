@@ -16,8 +16,8 @@ not_found_handling = "single-page-application"
 [browser]
 binding = "MY_BROWSER"
 
-# [ai]
-# binding = "AI"
+[ai]
+binding = "AI"
 
 [[d1_databases]]
 binding = "DB"
