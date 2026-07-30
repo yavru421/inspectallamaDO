@@ -1,0 +1,43 @@
+@inject IJSRuntime JS
+
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 px-4 py-2.5 flex items-center justify-around text-slate-400 safe-area-bottom shadow-2xl">
+    <button @onclick='async () => await OnNavSelect.InvokeAsync("search")'
+            class="flex flex-col items-center gap-0.5 transition font-semibold text-[11px] @(ActiveNav == "search" ? "text-indigo-400 font-bold scale-105" : "hover:text-slate-200")">
+        <span class="text-xl leading-none">🧠</span>
+        <span>Research</span>
+    </button>
+
+    <button @onclick='async () => await OnNavSelect.InvokeAsync("folders")'
+            class="flex flex-col items-center gap-0.5 transition font-semibold text-[11px] relative @(ActiveNav == "folders" ? "text-indigo-400 font-bold scale-105" : "hover:text-slate-200")">
+        <span class="text-xl leading-none">📁</span>
+        <span>Workspaces</span>
+        @if (FolderCount > 0)
+        {
+            <span class="absolute -top-1 right-1 px-1.5 py-0.2 rounded-full bg-indigo-600 text-white font-mono text-[9px] font-bold shadow">@FolderCount</span>
+        }
+    </button>
+
+    <button @onclick='async () => await OnNavSelect.InvokeAsync("history")'
+            class="flex flex-col items-center gap-0.5 transition font-semibold text-[11px] relative @(ActiveNav == "history" ? "text-indigo-400 font-bold scale-105" : "hover:text-slate-200")">
+        <span class="text-xl leading-none">📜</span>
+        <span>History</span>
+        @if (HistoryCount > 0)
+        {
+            <span class="absolute -top-1 right-1 px-1 py-0.2 rounded-full bg-slate-700 text-indigo-300 font-mono text-[9px] font-bold">@HistoryCount</span>
+        }
+    </button>
+
+    <button @onclick='async () => await OnNavSelect.InvokeAsync("settings")'
+            class="flex flex-col items-center gap-0.5 transition font-semibold text-[11px] @(ActiveNav == "settings" ? "text-indigo-400 font-bold scale-105" : "hover:text-slate-200")">
+        <span class="text-xl leading-none">⚙️</span>
+        <span>Settings</span>
+    </button>
+</div>
+
+@code {
+    [Parameter] public string ActiveNav { get; set; } = "search";
+    [Parameter] public int FolderCount { get; set; } = 0;
+    [Parameter] public int HistoryCount { get; set; } = 0;
+    [Parameter] public EventCallback<string> OnNavSelect { get; set; }
+}
+

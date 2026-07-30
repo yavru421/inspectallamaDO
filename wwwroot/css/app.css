@@ -44,9 +44,33 @@
   color: #94a3b8;
 }
 
-.do-highlight {
-  color: #fb923c;
-  font-weight: 800;
-  text-shadow: 0 0 6px rgba(251, 146, 60, 0.5);
+/* Custom Scrollbar for Research Tabs & Cards */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile Bottom Navigation & Drawer Micro-Animations */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+.drawer-enter {
+  animation: slideUpDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpDrawer {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 

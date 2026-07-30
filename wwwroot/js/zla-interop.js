@@ -365,6 +365,33 @@ window.zlaInterop = {
             printIframe.contentWindow.focus();
             printIframe.contentWindow.print();
         }, 250);
+    },
+
+    shareReport: async function (title, text, url) {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: title, text: text, url: url || window.location.href });
+                return true;
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error('Share error:', e);
+            }
+        }
+        // Fallback: Copy URL to Clipboard
+        try {
+            await navigator.clipboard.writeText(url || window.location.href);
+            return 'copied';
+        } catch (e) {
+            return false;
+        }
+    },
+
+    saveStorageItem: function (key, value) {
+        localStorage.setItem(key, value);
+    },
+
+    getStorageItem: function (key) {
+        return localStorage.getItem(key) || '';
     }
 };
+
 
