@@ -28,10 +28,3 @@ database_id = "1128e99a-70e1-458c-b0b7-d548a10a5533"
 binding = "IDENTITY_CACHE"
 id = "7f3831d3d4274a949e3fcf4e1549d671"
 
-[[durable_objects.bindings]]
-name = "INSPECTA_LLAMA_DO"
-class_name = "InspectaLlamaDO"
-
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["InspectaLlamaDO"]
