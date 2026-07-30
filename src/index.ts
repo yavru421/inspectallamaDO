@@ -419,9 +419,12 @@ Execute a full cognitive analysis. You must output ONLY a valid JSON object with
             };
           }
 
-          const summaryText = typeof parsedCognitiveData === 'string'
-            ? parsedCognitiveData
-            : (parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.');
+          let summaryText = "";
+          if (typeof parsedCognitiveData === 'object' && parsedCognitiveData !== null) {
+            summaryText = parsedCognitiveData.executiveSummary || aiResponse?.response || 'Synthesis completed.';
+          } else {
+            summaryText = String(parsedCognitiveData);
+          }
 
           return new Response(JSON.stringify({
             query,
