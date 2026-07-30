@@ -395,14 +395,17 @@
             @* Tab 5: /grill-me Interactive Stepper Nodes *@
             @if (activeTab == "grill")
             {
-                <div class="space-y-6">
-                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">🎯</span>
+                <div class="space-y-6 pb-20 sm:pb-8">
+                    <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-600/15 to-cyan-500/15 border border-amber-500/40 text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl animate-pulse">🎯</span>
                             <div>
-                                <span class="font-bold">Interactive /grill-me Decision Nodes:</span>
-                                <span> The Llama 3.3 70B AI engine paused at key research branches. Select your preferred choices below to drive downstream edge synthesis.</span>
+                                <span class="font-extrabold text-sm text-white">Interactive /grill-me Decision Engine</span>
+                                <p class="text-slate-300 text-xs mt-0.5">The Llama 3.3 70B AI engine paused at key research branches. Select your preferred options below to instantly trigger a downstream edge hop.</p>
                             </div>
+                        </div>
+                        <div class="shrink-0 font-mono text-[11px] bg-amber-500/20 px-3 py-1.5 rounded-xl border border-amber-400/40 text-amber-300 font-bold">
+                            ⚡ Zero-Liability Edge Loop
                         </div>
                     </div>
 
@@ -410,37 +413,44 @@
                     {
                         @foreach (var node in result.GrillNodes)
                         {
-                            <div class="p-5 rounded-2xl bg-slate-950/80 border @(node.IsResolved ? "border-emerald-500/40" : "border-amber-500/40") shadow-lg">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono @(node.IsResolved ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border border-amber-500/30")">
-                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Choice Resolved" : "⏳ Awaiting Analyst Input")
+                            <div class="p-4 sm:p-6 rounded-2xl bg-slate-950/90 border @(node.IsResolved ? "border-emerald-500/50 shadow-emerald-500/10" : "border-amber-500/50 shadow-amber-500/10") shadow-2xl space-y-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold font-mono @(node.IsResolved ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-amber-500/20 text-amber-300 border border-amber-500/40")">
+                                        Node #@node.StepIndex &bull; @(node.IsResolved ? "✓ Branch Selected" : "⏳ Awaiting Single-Tap Analyst Selection")
                                     </span>
                                     @if (!string.IsNullOrEmpty(node.SelectedOption))
                                     {
-                                        <span class="text-xs text-emerald-400 font-semibold truncate max-w-xs">Selected: @node.SelectedOption</span>
+                                        <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 truncate max-w-xs">
+                                            ✓ Active: @node.SelectedOption
+                                        </span>
                                     }
                                 </div>
-                                <h4 class="font-black text-white text-base mb-1">@node.Title</h4>
-                                <p class="text-sm text-slate-300 mb-4 leading-relaxed font-medium">@node.ContextQuestion</p>
+                                
+                                <div>
+                                    <h4 class="font-black text-white text-lg sm:text-xl tracking-tight mb-1">@node.Title</h4>
+                                    <p class="text-sm text-slate-300 leading-relaxed font-medium">@node.ContextQuestion</p>
+                                </div>
 
-                                <div class="space-y-3">
+                                <div class="grid grid-cols-1 gap-3 pt-2">
                                     @foreach (var opt in node.Options)
                                     {
                                         var isCurrentSelected = node.SelectedOption == opt.Text;
                                         <div @onclick='() => SelectGrillOption(node, opt)'
-                                             class="p-3.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 @(isCurrentSelected ? "bg-indigo-600/20 border-indigo-500 text-white shadow-md" : opt.IsRecommended ? "bg-amber-500/10 border-amber-500/40 hover:border-amber-400 text-slate-200" : "bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300")">
-                                            <div class="space-y-1">
+                                             class="touch-target p-4 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 select-none @(isCurrentSelected ? "bg-indigo-600/30 border-indigo-400 text-white shadow-xl ring-2 ring-indigo-500/50 scale-[1.01]" : opt.IsRecommended ? "bg-amber-500/10 border-amber-500/50 hover:border-amber-400 text-slate-100 recommended-glow" : "bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-300")">
+                                            <div class="space-y-1 pr-2">
                                                 <div class="flex items-center gap-2">
                                                     @if (opt.IsRecommended)
                                                     {
-                                                        <span class="px-2 py-0.5 rounded-md bg-amber-500/30 text-amber-300 font-bold text-[10px] uppercase tracking-wide border border-amber-400/40">★ Recommended</span>
+                                                        <span class="px-2.5 py-0.5 rounded-md bg-amber-500/30 text-amber-300 font-black text-[10px] uppercase tracking-wider border border-amber-400/50 flex items-center gap-1 shadow-sm">
+                                                            ★ Recommended
+                                                        </span>
                                                     }
-                                                    <span class="font-bold text-sm">@opt.Text</span>
+                                                    <span class="font-bold text-sm sm:text-base text-white">@opt.Text</span>
                                                 </div>
                                                 <p class="text-xs text-slate-400 leading-snug">@opt.Rationale</p>
                                             </div>
-                                            <button class="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 w-full sm:w-auto @(isCurrentSelected ? "bg-indigo-600 text-white" : "bg-slate-800 hover:bg-slate-700 text-slate-200")">
-                                                @(isCurrentSelected ? "✓ Selected" : "Select Branch →")
+                                            <button class="w-full sm:w-auto touch-target px-4 py-2 rounded-xl text-xs font-black transition shrink-0 flex items-center justify-center gap-1.5 shadow-md @(isCurrentSelected ? "bg-indigo-500 text-white" : opt.IsRecommended ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold" : "bg-slate-800 hover:bg-slate-700 text-slate-200")">
+                                                <span>@(isCurrentSelected ? "✓ Branch Selected" : "Select Branch →")</span>
                                             </button>
                                         </div>
                                     }
@@ -448,17 +458,30 @@
                             </div>
                         }
 
-                        <div class="pt-4 border-t border-slate-800 flex justify-end">
+                        <div class="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <span class="text-xs text-slate-400 font-mono">
+                                Resolved (@result.GrillNodes.Count(n => n.IsResolved)/@result.GrillNodes.Count) decision nodes ready for downstream edge evaluation.
+                            </span>
                             <button @onclick="ExecuteGrillDownstreamHop" disabled="@(isLoading || !result.GrillNodes.Any(n => n.IsResolved))"
-                                    class="bg-gradient-to-r from-amber-500 via-indigo-600 to-cyan-500 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl transition shadow-xl flex items-center gap-2 text-sm">
-                                <span>🚀 Execute Edge Hop with Selected Branches (@result.GrillNodes.Count(n => n.IsResolved))</span>
+                                    class="w-full sm:w-auto touch-target bg-gradient-to-r from-amber-500 via-indigo-600 to-cyan-500 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black px-6 py-3.5 rounded-2xl transition shadow-2xl flex items-center justify-center gap-2 text-sm sm:text-base">
+                                @if (isLoading)
+                                {
+                                    <span class="animate-spin">🔄</span>
+                                    <span>Evaluating Edge Hop...</span>
+                                }
+                                else
+                                {
+                                    <span>🚀 Execute Downstream Edge Hop (@result.GrillNodes.Count(n => n.IsResolved))</span>
+                                }
                             </button>
                         </div>
                     }
                     else
                     {
-                        <div class="text-center py-8 text-slate-400 text-sm">
-                            No interactive decision nodes generated yet. Run a search in 🧠 <strong>Deep Cognitive Mode</strong> to generate /grill-me steps.
+                        <div class="text-center py-12 bg-slate-950/60 border border-slate-800 rounded-2xl p-6">
+                            <span class="text-3xl mb-2 block">🎯</span>
+                            <h4 class="font-bold text-white text-base">No Active Stepper Nodes</h4>
+                            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Run a research query in 🧠 <strong>Deep Multi-Hop Mode</strong> to generate real-time dialectical decision nodes.</p>
                         </div>
                     }
                 </div>
@@ -651,6 +674,7 @@
                 var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
                 activeTab = "synthesis";
+                await IncrementCreditTickerState(credits: 2, estimatedTokens: 1200);
                 await RefreshUserStatus();
             }
             else if ((int)response.StatusCode == 429)
@@ -711,6 +735,7 @@
                 var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
                 activeTab = "synthesis";
+                await IncrementCreditTickerState(credits: 1, estimatedTokens: 800);
                 await RefreshUserStatus();
             }
             else
@@ -727,6 +752,21 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task IncrementCreditTickerState(int credits, int estimatedTokens)
+    {
+        try
+        {
+            var raw = await JS.InvokeAsync<string>("zlaInterop.getCreditTickerState");
+            var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var state = System.Text.Json.JsonSerializer.Deserialize<InspectaLlamaDO.Models.CreditTickerState>(raw, opts) ?? new InspectaLlamaDO.Models.CreditTickerState();
+            state.CreditsUsed += credits;
+            state.TokensProcessed += estimatedTokens;
+            var json = System.Text.Json.JsonSerializer.Serialize(state);
+            await JS.InvokeVoidAsync("zlaInterop.saveCreditTickerState", json);
+        }
+        catch { }
     }
 
     private bool isSyncing = false;

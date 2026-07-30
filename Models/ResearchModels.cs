@@ -58,4 +58,9 @@ namespace InspectaLlamaDO.Models
     public class WorkspaceFolder { public string Id { get; set; } = Guid.NewGuid().ToString(); public string Name { get; set; } = ""; public string Icon { get; set; } = "📁"; public string ParentId { get; set; } = ""; public DateTime CreatedAt { get; set; } = DateTime.UtcNow; }
 
     public class ResearchTabSession { public string Id { get; set; } = Guid.NewGuid().ToString(); public string Title { get; set; } = "New Research"; public string Query { get; set; } = ""; public string Mode { get; set; } = "deep_reasoning"; public bool DeepCrawl { get; set; } = true; public string MainTab { get; set; } = "search"; public string ActiveResultTab { get; set; } = "synthesis"; public SearchResultResponse? Result { get; set; } public string FolderId { get; set; } = "default"; public DateTime CreatedAt { get; set; } = DateTime.UtcNow; }
+
+    public class CreditTickerState {
+        public int CreditsUsed { get; set; } = 0;
+        public int TokensProcessed { get; set; } = 0;
+    }
 }

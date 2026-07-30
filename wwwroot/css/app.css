@@ -67,10 +67,25 @@
     transform: translateY(100%);
     opacity: 0.8;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+@keyframes tickerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); filter: brightness(1.25); }
+  100% { transform: scale(1); }
 }
+
+.animate-ticker-pulse {
+  animation: tickerPulse 0.6s ease-out;
+}
+
+/* Touch Target Optimization for Single-Thumb Mobile */
+.touch-target {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.recommended-glow {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
 
 

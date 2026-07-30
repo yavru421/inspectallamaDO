@@ -391,6 +391,19 @@ window.zlaInterop = {
 
     getStorageItem: function (key) {
         return localStorage.getItem(key) || '';
+    },
+
+    // ── Live Credit & Token Ticker Persistence ──
+    getCreditTickerState: function () {
+        const raw = localStorage.getItem('inspecta_credit_ticker_v1');
+        if (!raw) {
+            return JSON.stringify({ creditsUsed: 0, tokensProcessed: 0 });
+        }
+        return raw;
+    },
+
+    saveCreditTickerState: function (stateJson) {
+        localStorage.setItem('inspecta_credit_ticker_v1', stateJson);
     }
 };
 
