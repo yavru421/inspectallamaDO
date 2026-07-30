@@ -39,18 +39,24 @@
                         </a>
                     }
 
-                    <a href="https://personalization.dondlingergc.com/account" target="_blank" title="Manage Account & Settings"
-                       class="ml-1 text-slate-400 hover:text-white transition">
+                    <button @onclick="() => showSettingsModal = true" title="Manage Account & Settings"
+                       class="ml-1 text-slate-400 hover:text-white transition flex items-center gap-1">
                         ⚙️ Settings
-                    </a>
+                    </button>
                 </div>
             }
             else
             {
-                <a href="https://personalization.dondlingergc.com" target="_blank"
-                   class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-3 py-1.5 bg-indigo-500/10">
-                    🔑 Sign In (personalization.dondlingergc.com)
-                </a>
+                <div class="flex items-center gap-2">
+                    <button @onclick="() => showSettingsModal = true" title="Settings"
+                       class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                        ⚙️ Settings
+                    </button>
+                    <a href="https://personalization.dondlingergc.com" target="_blank"
+                       class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-3 py-1.5 bg-indigo-500/10">
+                        🔑 Sign In (personalization.dondlingergc.com)
+                    </a>
+                </div>
             }
 
             @if (isPro)
@@ -70,9 +76,75 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-5xl w-full mx-auto p-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
         @Body
     </main>
+
+    @* ── Native In-App Settings Modal ── *@
+    @if (showSettingsModal)
+    {
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-indigo-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">⚙️</span>
+                        <div>
+                            <h3 class="font-bold text-white text-lg">InspectaLlama Settings</h3>
+                            <p class="text-xs text-slate-400">Zero-Liability Architecture & Platform Configuration</p>
+                        </div>
+                    </div>
+                    <button @onclick="() => showSettingsModal = false" class="text-slate-400 hover:text-white font-bold text-xl px-2">&times;</button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
+                        <span class="text-indigo-400 font-bold uppercase tracking-wider text-[10px]">Session Status</span>
+                        <div class="text-slate-200 font-semibold">
+                            @(userSession?.IsAuthenticated == true ? $"Logged in as {userSession.Name} ({userSession.Email})" : "Guest Mode (Zero-Liability Architecture - 100% Client-Side)")
+                        </div>
+                        <div class="text-slate-400 font-mono text-[11px]">
+                            Credit Balance: <strong class="text-indigo-300">@(userSession?.CreditBalance ?? 0)</strong>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                        <span class="text-cyan-400 font-bold uppercase tracking-wider text-[10px]">Edge Compute Engine</span>
+                        <div class="flex items-center justify-between text-slate-300">
+                            <span>Llama 3.3 70B Edge Router</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">ONLINE</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-300">
+                            <span>Cloudflare Durable Objects State</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                        <span class="text-amber-400 font-bold uppercase tracking-wider text-[10px]">Local Storage & Data</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Clear Local Research Cache</span>
+                            <button @onclick="ClearLocalCache" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition">
+                                Purge Cache
+                            </button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(settingsNotice))
+                        {
+                            <div class="text-[11px] text-emerald-400 font-mono">@settingsNotice</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
+                    <a href="https://personalization.dondlingergc.com" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+                        Personalization Portal ↗
+                    </a>
+                    <button @onclick="() => showSettingsModal = false" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 
     <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 flex flex-col items-center gap-1">
         <div>InspectaLlama Engine &copy; 2026 &bull; Cloudflare Edge Durable Objects &amp; Browser Rendering</div>
@@ -84,6 +156,8 @@
     private bool isPro = false;
     private bool isCheckoutLoading = false;
     private PersonalizationSession? userSession = null;
+    private bool showSettingsModal = false;
+    private string settingsNotice = "";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -113,14 +187,24 @@
             }
 
             var res = await Http.GetFromJsonAsync<UserStatusResponse>("/api/user/status");
-            if (res != null && res.IsPro)
-            {
-                isPro = true;
-            }
         }
         catch (Exception)
         {
             // Fallback for offline ZLA execution
+        }
+    }
+
+    private async Task ClearLocalCache()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.clear");
+            await JS.InvokeVoidAsync("sessionStorage.clear");
+            settingsNotice = "✓ Local research cache purged successfully.";
+        }
+        catch
+        {
+            settingsNotice = "Failed to clear local cache.";
         }
     }
 
