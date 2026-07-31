@@ -36,6 +36,41 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // 0. Auth / Session Check Proxy Route (Clean Guest Fallback without 401 noise)
+    if (url.pathname === '/api/auth/me') {
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({
+          isAuthenticated: false,
+          user_id: 'anonymous_local',
+          email: '',
+          name: 'Guest User',
+          subscription_tier: 'free',
+          credit_balance: 0,
+          avatar_url: ''
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Forward authenticated request to personalization backend if bearer token present
+      try {
+        const targetRes = await fetch('https://personalization.dondlingergc.com/api/auth/me', {
+          headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+        });
+        const data = await targetRes.json();
+        return new Response(JSON.stringify(data), {
+          status: targetRes.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({
+          isAuthenticated: false,
+          user_id: 'anonymous_local',
+          name: 'Guest User',
+          subscription_tier: 'free'
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // 1. User Status Route
     if (url.pathname === '/api/user/status') {
       const userId = request.headers.get('x-user-id') || 'anonymous';
@@ -365,9 +400,14 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
     const newHeaders = new Headers(response.headers);
     Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
     
-    // Cache-Control optimization for Wasm & JS bundles
-    if (url.pathname.endsWith('.wasm') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-      newHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
+    // Strict Cache-Control for HTML to force instant edge updates
+    if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.endsWith('.json')) {
+      newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+      newHeaders.set('Pragma', 'no-cache');
+      newHeaders.set('Expires', '0');
+    } else if (url.pathname.endsWith('.wasm') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+      // Revalidate JS/WASM/CSS to prevent stale bundle lockouts
+      newHeaders.set('Cache-Control', 'no-cache, must-revalidate');
     }
 
     return new Response(response.body, {

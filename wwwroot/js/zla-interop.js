@@ -128,13 +128,27 @@ window.zlaInterop = {
     // ── Central Personalization SSO & Identity Interop ──
     checkPersonalizationSession: async function () {
         const jwt = localStorage.getItem('inspectallamado_jwt');
-        const headers = { 'Accept': 'application/json' };
-        if (jwt) {
-            headers['Authorization'] = 'Bearer ' + jwt;
+        
+        // Skip unauthenticated HTTP request if no token exists to prevent 401 console noise
+        if (!jwt) {
+            return JSON.stringify({
+                isAuthenticated: false,
+                userId: 'anonymous_local',
+                email: '',
+                name: 'Guest User',
+                subscriptionTier: 'free',
+                creditBalance: 0,
+                avatarUrl: ''
+            });
         }
 
+        const headers = { 
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + jwt
+        };
+
         try {
-            const response = await fetch('https://personalization.dondlingergc.com/api/auth/me', {
+            const response = await fetch('/api/auth/me', {
                 method: 'GET',
                 credentials: 'include',
                 headers: headers
