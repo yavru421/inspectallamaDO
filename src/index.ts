@@ -518,7 +518,7 @@ Output ONLY valid JSON matching this schema:
                 options: [
                   { text: "(Recommended) High Rigor (95%+ Epistemic Confidence)", isRecommended: true, rationale: "Cross-references multiple independent primary sources and encyclopedia archives." },
                   { text: "Broad Exploratory Survey", isRecommended: false, rationale: "Captures emerging media coverage and public discourse." },
-                  { text: "Strict Primary Source Verification", isRecommended: rationale: false, "Filters out commentary, requiring official documents or direct quotes." },
+                  { text: "Strict Primary Source Verification", isRecommended: false, rationale: "Filters out commentary, requiring official documents or direct quotes." },
                   { text: "Rapid Fact Sweep", isRecommended: false, rationale: "Fast consensus summary of established facts." }
                 ]
               },
