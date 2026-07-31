@@ -277,6 +277,16 @@ Output ONLY valid JSON matching this schema:
             const lastBrace = str.lastIndexOf('}');
             if (firstBrace !== -1 && lastBrace !== -1) str = str.substring(firstBrace, lastBrace + 1);
             parsedData = JSON.parse(str);
+
+            // Handle nested JSON string in executiveSummary if LLM outputs markdown json codeblocks
+            if (typeof parsedData.executiveSummary === 'string' && parsedData.executiveSummary.trim().startsWith('```json')) {
+              let innerStr = parsedData.executiveSummary.trim();
+              innerStr = innerStr.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+              try {
+                const innerObj = JSON.parse(innerStr);
+                if (innerObj.executiveSummary) parsedData = innerObj;
+              } catch (_) {}
+            }
           } catch (_) {
             parsedData = {
               executiveSummary: typeof aiResponse?.response === 'string' ? aiResponse.response : 'Synthesis completed.',

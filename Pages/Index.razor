@@ -610,51 +610,57 @@
 
         isLoading = true;
         errorMessage = null;
-        result = null;
 
-        try
+        // Build immediate Pre-Search Grill Me deck to interview the user FIRST
+        var initialGrillNodes = new List<InteractiveGrillNode>
         {
-            await EnsureJwtAttached();
-            var req = new { query = searchQuery, deepCrawl, mode = selectedMode };
-            var response = await Http.PostAsJsonAsync("/api/search", req);
+            new InteractiveGrillNode
+            {
+                StepIndex = 1,
+                Title = "1. Research Angle & Scope",
+                ContextQuestion = $"Which primary perspective should the AI prioritize for '{searchQuery}'?",
+                Options = new List<GrillOption>
+                {
+                    new GrillOption { Text = "(Recommended) Architecture & Deep Technical Trade-offs", IsRecommended = true, Rationale = "Focuses on benchmarks, distributed state, and hardware/runtime limits." },
+                    new GrillOption { Text = "Production Reliability & Security Audit", IsRecommended = false, Rationale = "Focuses on failure modes, zero-liability architecture, and edge safety." },
+                    new GrillOption { Text = "Solo Founder SaaS & Deployment Speed", IsRecommended = false, Rationale = "Focuses on zero-server cost, high leverage, and rapid iteration." }
+                }
+            },
+            new InteractiveGrillNode
+            {
+                StepIndex = 2,
+                Title = "2. Target Infrastructure Stack",
+                ContextQuestion = "Which infrastructure paradigm best aligns with your target environment?",
+                Options = new List<GrillOption>
+                {
+                    new GrillOption { Text = "(Recommended) Cloudflare Edge (Workers, Durable Objects, D1)", IsRecommended = true, Rationale = "Global low-latency, zero cold-starts, and client-side WASM state." },
+                    new GrillOption { Text = "Traditional Cloud & Bare-Metal Database", IsRecommended = false, Rationale = "Focuses on Redis, Postgres, and self-hosted server instances." },
+                    new GrillOption { Text = "Zero-Liability Pure Client Application (ZLA)", IsRecommended = false, Rationale = "100% static client-side WASM with zero backend server overhead." }
+                }
+            },
+            new InteractiveGrillNode
+            {
+                StepIndex = 3,
+                Title = "3. Synthesis Depth & Artifacts",
+                ContextQuestion = "What deliverable format should be generated upon completion?",
+                Options = new List<GrillOption>
+                {
+                    new GrillOption { Text = "(Recommended) Full Executive Synthesis & Verified Claims Matrix", IsRecommended = true, Rationale = "Generates dialectical claim checks, confidence scores, and knowledge graph." },
+                    new GrillOption { Text = "Code Blueprints & Implementation Examples", IsRecommended = false, Rationale = "Focuses on production C#/TypeScript code snippets and config." }
+                }
+            }
+        };
 
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
-                activeTab = "synthesis";
-                await IncrementCreditTickerState(credits: 2, estimatedTokens: 1200);
-                await RefreshUserStatus();
-                if (result?.GrillNodes != null && result.GrillNodes.Any())
-                {
-                    await ScrollToScreen("screen-grill");
-                }
-                else
-                {
-                    await ScrollToScreen("screen-synthesis");
-                }
-            }
-            else if ((int)response.StatusCode == 429)
-            {
-                rateLimitHit = true;
-                errorMessage = "Daily free search limit reached (100/100). Upgrade to Pro for unlimited searches.";
-                await RefreshUserStatus();
-            }
-            else
-            {
-                var bodyText = await response.Content.ReadAsStringAsync();
-                errorMessage = $"Search engine encountered an issue ({response.StatusCode}). Quota was not deducted. Details: {bodyText}";
-            }
-        }
-        catch (Exception ex)
+        result = new SearchResultResponse
         {
-            errorMessage = $"Search failed: {ex.Message}. Quota was not deducted.";
-            Console.WriteLine($"Search error: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
+            Query = searchQuery,
+            Mode = selectedMode,
+            Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            GrillNodes = initialGrillNodes
+        };
+
+        isLoading = false;
+        await ScrollToScreen("screen-grill");
     }
 
     private async Task SelectGrillOption(InteractiveGrillNode node, GrillOption opt)
