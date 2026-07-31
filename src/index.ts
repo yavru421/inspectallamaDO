@@ -410,15 +410,10 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
     const newHeaders = new Headers(response.headers);
     Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
     
-    // Strict Cache-Control for HTML to force instant edge updates
-    if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.endsWith('.json')) {
-      newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
-      newHeaders.set('Pragma', 'no-cache');
-      newHeaders.set('Expires', '0');
-    } else if (url.pathname.endsWith('.wasm') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-      // Revalidate JS/WASM/CSS to prevent stale bundle lockouts
-      newHeaders.set('Cache-Control', 'no-cache, must-revalidate');
-    }
+    // Strict Anti-Caching for ALL static assets to guarantee instant edge propagation
+    newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+    newHeaders.set('Pragma', 'no-cache');
+    newHeaders.set('Expires', '0');
 
     return new Response(response.body, {
       status: response.status,
