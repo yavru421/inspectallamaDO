@@ -410,41 +410,27 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
       try {
         const { topic } = await request.json() as { topic: string };
         const grillPrompt = `TOPIC: "${topic}"
-INSTRUCTIONS: You are the InspectaLlama Grill-Me Edge Dispatcher. Generate an interactive 3-step decision interview pipeline to clarify the scope, architecture, depth, and target vectors for this research task.
-For each step, provide:
+INSTRUCTIONS: You are the InspectaLlama Grill-Me Edge Dispatcher. Generate an interactive 3-step decision interview pipeline to clarify the scope, analytical perspective, depth, and output format for this specific research topic.
+CRITICAL INVARIANT: Adapt your questions to the exact domain of the topic! If the topic is a person/biography/politics/history/science/news, DO NOT ask about software architecture, ZLA, or databases. Ask questions relevant to that specific subject matter (e.g. historical era, political career, scientific rigor, perspective lens, focus areas).
+
+For each of the 3 steps, generate:
 - stepIndex (1, 2, or 3)
-- title (short header)
-- contextQuestion (clear question asking the user for their preference)
-- options: Array of 2-3 options. Exactly ONE option must be marked with isRecommended: true and have a clear rationale.
+- title (short domain-appropriate header)
+- contextQuestion (clear question asking the user for their research preference regarding "${topic}")
+- options: Array of 4 distinct options tailored specifically to "${topic}". Exactly ONE option must be marked with isRecommended: true and have a clear rationale.
 
 Output ONLY valid JSON matching this schema:
 {
   "questions": [
     {
       "stepIndex": 1,
-      "title": "Scope & Depth",
-      "contextQuestion": "What depth of research vector sweep should be executed for ${topic}?",
+      "title": "Domain Focus & Scope",
+      "contextQuestion": "What specific angle or era should be prioritized for research on ${topic}?",
       "options": [
-        {"text": "(Recommended) Deep Bare-Metal Edge Sweep", "isRecommended": true, "rationale": "Sweeps all D1, DuckDB memory, and live web search APIs simultaneously."},
-        {"text": "Fast Edge Synthesis", "isRecommended": false, "rationale": "High-velocity summary without deep crawl."}
-      ]
-    },
-    {
-      "stepIndex": 2,
-      "title": "Architectural Alignment",
-      "contextQuestion": "Which implementation paradigm should be prioritized?",
-      "options": [
-        {"text": "(Recommended) Zero-Liability Architecture (ZLA)", "isRecommended": true, "rationale": "100% client-side WASM execution with zero server bill."},
-        {"text": "Cloudflare Worker Edge Middleware", "isRecommended": false, "rationale": "Stateless edge routing with Worker AI inference."}
-      ]
-    },
-    {
-      "stepIndex": 3,
-      "title": "Output Artifact Format",
-      "contextQuestion": "How should the research findings be presented?",
-      "options": [
-        {"text": "(Recommended) Publication-Grade Markdown & Verified Claims", "isRecommended": true, "rationale": "Full dialectical breakdown, epistemic confidence scores, and source links."},
-        {"text": "Executive Summary & Action Plan", "isRecommended": false, "rationale": "Concise high-level takeaways."}
+        {"text": "(Recommended) Comprehensive Historical & Fact-Checked Overview", "isRecommended": true, "rationale": "Sweeps official records, key milestones, and verified timeline."},
+        {"text": "Recent Developments & Current Context", "isRecommended": false, "rationale": "Focuses strictly on recent events and emerging coverage."},
+        {"text": "Key Controversies & Dialectical Perspectives", "isRecommended": false, "rationale": "Audits opposing viewpoints and claims for objective evaluation."},
+        {"text": "Primary Document & Quote Analysis", "isRecommended": false, "rationale": "Prioritizes verbatim transcripts and primary source records."}
       ]
     }
   ]
@@ -475,35 +461,80 @@ Output ONLY valid JSON matching this schema:
         } catch (_) {}
 
         if (questions.length === 0) {
-          questions = [
-            {
-              stepIndex: 1,
-              title: "Research Depth",
-              contextQuestion: `What scope of analysis would you like for "${topic}"?`,
-              options: [
-                { text: "(Recommended) Exhaustive Deep-Reasoning Vector Sweep", isRecommended: true, rationale: "Analyzes primary sources, verified claims, and technical architecture." },
-                { text: "Fast Edge Synthesis", isRecommended: false, rationale: "Rapid overview focusing on high-level takeaways." }
-              ]
-            },
-            {
-              stepIndex: 2,
-              title: "Technical Stack Preference",
-              contextQuestion: "Which architectural constraint applies to this task?",
-              options: [
-                { text: "(Recommended) Zero-Liability Architecture (ZLA)", isRecommended: true, rationale: "Pure client-side WASM execution, zero maintenance liability." },
-                { text: "Cloudflare Edge / Durable Objects", isRecommended: false, rationale: "Distributed edge state with global replication." }
-              ]
-            },
-            {
-              stepIndex: 3,
-              title: "Verification Pipeline",
-              contextQuestion: "How should claims be audited?",
-              options: [
-                { text: "(Recommended) Dialectical Claim Audit", isRecommended: true, rationale: "Verifies facts against live web graphs and epistemological confidence scores." },
-                { text: "Standard Citation Extraction", isRecommended: false, rationale: "Extracts direct source URLs and verbatim quotes." }
-              ]
-            }
-          ];
+          const isTech = /code|software|api|wasm|zla|architecture|cloudflare|database|build|c#/i.test(topic);
+          if (isTech) {
+            questions = [
+              {
+                stepIndex: 1,
+                title: "Technical Architecture Scope",
+                contextQuestion: `What scope of engineering analysis should be conducted for "${topic}"?`,
+                options: [
+                  { text: "(Recommended) Zero-Liability Architecture (ZLA)", isRecommended: true, rationale: "100% client-side WASM execution with zero server liability." },
+                  { text: "Cloudflare Durable Objects & WebSockets", isRecommended: false, rationale: "Real-time edge state persistence and live WebSocket broadcast." },
+                  { text: "Stateless Edge Worker Routing", isRecommended: false, rationale: "High-performance edge routing with D1 database caching." },
+                  { text: "Pure Offline WASM Isolation", isRecommended: false, rationale: "Client-side execution without external network calls." }
+                ]
+              },
+              {
+                stepIndex: 2,
+                title: "Code & Benchmark Rigor",
+                contextQuestion: "Which technical evaluation metric should be prioritized?",
+                options: [
+                  { text: "(Recommended) High Rigor (95%+ Confidence)", isRecommended: true, rationale: "Verifies technical specs against official documentation & benchmark logs." },
+                  { text: "Exploratory Architecture Audit", isRecommended: false, rationale: "Broad survey of competing framework implementations." },
+                  { text: "Security & Vulnerability Audit", isRecommended: false, rationale: "Analyzes attack vectors and data isolation boundaries." },
+                  { text: "Performance & Cold-Start Benchmark", isRecommended: false, rationale: "Focuses on execution latency and resource memory usage." }
+                ]
+              },
+              {
+                stepIndex: 3,
+                title: "Output Spec Format",
+                contextQuestion: "How should the technical findings be formatted?",
+                options: [
+                  { text: "(Recommended) Publication-Grade Markdown & Code Samples", isRecommended: true, rationale: "Full architectural breakdown with runnable code blocks." },
+                  { text: "Executive Architecture Briefing", isRecommended: false, rationale: "High-level summary for engineering leadership." },
+                  { text: "Step-by-Step Migration Blueprint", isRecommended: false, rationale: "Actionable refactoring roadmap." },
+                  { text: "Interactive Decision Tree", isRecommended: false, rationale: "Categorized tradeoff matrix." }
+                ]
+              }
+            ];
+          } else {
+            questions = [
+              {
+                stepIndex: 1,
+                title: "Research Focus & Scope",
+                contextQuestion: `Which primary perspective or era should be examined for "${topic}"?`,
+                options: [
+                  { text: "(Recommended) Comprehensive Historical & Fact-Checked Overview", isRecommended: true, rationale: "Examines official records, key milestones, and verified timeline." },
+                  { text: "Recent News & Contemporary Developments", isRecommended: false, rationale: "Focuses strictly on recent events and emerging coverage." },
+                  { text: "Dialectical Viewpoints & Critical Debates", isRecommended: false, rationale: "Audits opposing perspectives and contested claims for objective balance." },
+                  { text: "Key Quotes & Verbatim Statements", isRecommended: false, rationale: "Prioritizes primary source quotes and direct public statements." }
+                ]
+              },
+              {
+                stepIndex: 2,
+                title: "Epistemic Rigor & Source Selection",
+                contextQuestion: "What verification standard should govern the source audit?",
+                options: [
+                  { text: "(Recommended) High Rigor (95%+ Epistemic Confidence)", isRecommended: true, rationale: "Cross-references multiple independent primary sources and encyclopedia archives." },
+                  { text: "Broad Exploratory Survey", isRecommended: false, rationale: "Captures emerging media coverage and public discourse." },
+                  { text: "Strict Primary Source Verification", isRecommended: rationale: false, "Filters out commentary, requiring official documents or direct quotes." },
+                  { text: "Rapid Fact Sweep", isRecommended: false, rationale: "Fast consensus summary of established facts." }
+                ]
+              },
+              {
+                stepIndex: 3,
+                title: "Report Structure",
+                contextQuestion: "How should the research report be structured?",
+                options: [
+                  { text: "(Recommended) Verified Claims Matrix & Source Audits", isRecommended: true, rationale: "Dialectical report with claim confidence badges and verbatim quotes." },
+                  { text: "Chronological Timeline & Key Milestones", isRecommended: false, rationale: "Sequential breakdown of historical events." },
+                  { text: "Executive Summary & Key Takeaways", isRecommended: false, rationale: "High-level briefing for fast reading." },
+                  { text: "Deep Analytical Monograph", isRecommended: false, rationale: "In-depth investigation with full context." }
+                ]
+              }
+            ];
+          }
         }
 
         return new Response(JSON.stringify({ success: true, topic, questions }), {
