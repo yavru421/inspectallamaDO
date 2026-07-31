@@ -1,4 +1,5 @@
 @page "/"
+@layout Layout.AppLayout
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
@@ -6,34 +7,32 @@
 <PageTitle>InspectaLlama &bull; Pinnacle Deep Semantic AI Research</PageTitle>
 
 @* Floating Mobile Bottom Screen Navigation Dock *@
-<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-full px-3 py-2 shadow-2xl flex items-center gap-1.5 sm:gap-3 text-xs font-bold text-slate-300 pointer-events-auto">
-    <button @onclick='() => ScrollToScreen("screen-search")' 
-            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 bg-indigo-600/30 text-indigo-300 border border-indigo-500/50 hover:bg-indigo-600 hover:text-white">
-        <span>🔍</span>
-        <span class="hidden sm:inline">1. Search</span>
+<div style="position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(13, 19, 34, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 999px; padding: 0.5rem 0.85rem; box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(6, 182, 212, 0.1); display: flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">
+    <button @onclick='() => ScrollToScreen("screen-search")'
+            style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid var(--border-cyan); background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+        <span>🔍</span><span>Search</span>
     </button>
-    <button @onclick='() => ScrollToScreen("screen-synthesis")' 
-            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
-        <span>🧠</span>
-        <span class="hidden sm:inline">2. Synthesis</span>
+    <button @onclick='() => ScrollToScreen("screen-synthesis")'
+            style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+        <span>🧠</span><span>Synthesis</span>
     </button>
-    <button @onclick='() => ScrollToScreen("screen-data")' 
-            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
-        <span>🌐</span>
-        <span class="hidden sm:inline">3. Data</span>
+    <button @onclick='() => ScrollToScreen("screen-data")'
+            style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+        <span>🌐</span><span>Data</span>
     </button>
-    <button @onclick='() => ScrollToScreen("screen-grill")' 
-            class="px-3 py-1.5 rounded-full transition flex items-center gap-1.5 hover:bg-slate-800 hover:text-white">
-        <span>🎯</span>
-        <span class="hidden sm:inline">4. Grill Me</span>
+    <button @onclick='() => ScrollToScreen("screen-grill")'
+            style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+        <span>🎯</span><span>Grill Me</span>
     </button>
+    <div style="width: 1px; height: 18px; background: var(--border-color); margin: 0 0.25rem;"></div>
+    <a href="/evaluator" style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid var(--border-indigo); background: rgba(99, 102, 241, 0.12); color: var(--accent-indigo); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; text-decoration: none; font-size: 0.75rem;">⚡ Tools</a>
 </div>
 
-<div class="w-full h-full flex flex-col overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar bg-slate-950" id="app-swiper">
+<div style="width: 100%; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; background: radial-gradient(circle at top left, rgba(6, 182, 212, 0.07), transparent 40%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.07), transparent 40%), var(--bg-primary);" id="app-swiper">
     
     @* SCREEN 1: Search & Scraper *@
-    <section id="screen-search" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-y-auto">
-        <div class="w-full max-w-3xl flex flex-col items-center text-center space-y-6 pt-16 sm:pt-0">
+    <section id="screen-search" style="width: 100%; height: 100vh; flex-shrink: 0; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; position: relative; overflow-y: auto;">
+        <div style="width: 100%; max-width: 780px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.5rem; padding-top: 4rem;">
             
             @if (showPaymentAlert)
             {
@@ -85,74 +84,62 @@
                 <span class="text-xs font-mono text-indigo-400/80">&bull; Llama 3.3 70B Edge Router</span>
             </div>
             
-            <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight">
-                Cognitive Research with <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Pinnacle AI Precision</span>
+            <h1 style="font-family: 'Outfit', sans-serif; font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 900; color: #fff; letter-spacing: -0.03em; line-height: 1.1;">
+                Cognitive Research with <span class="gradient-title">Pinnacle AI Precision</span>
             </h1>
-            <p class="text-slate-400 text-sm">
-                Autonomous web graph traversal, dialectical claim verification, and source audits.
-            </p>
+            <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 540px;">Autonomous web graph traversal, dialectical claim verification, and source audits — powered by Cloudflare Workers AI edge runtime.</p>
 
-            <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 text-xs font-bold w-full sm:w-auto">
-                <button @onclick='() => mainTab = "search"' class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition border @(mainTab == "search" ? "bg-indigo-600 text-white border-indigo-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-card); backdrop-filter: blur(12px); padding: 0.4rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); font-size: 0.82rem; font-weight: 700; width: 100%; max-width: 360px;">
+                <button @onclick='() => mainTab = "search"'
+                        style="flex: 1; padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid @(mainTab == "search" ? "var(--border-indigo)" : "transparent"); background: @(mainTab == "search" ? "rgba(99,102,241,0.25)" : "transparent"); color: @(mainTab == "search" ? "#fff" : "var(--text-muted)"); cursor: pointer; transition: all 0.2s;">
                     🧠 Deep Search
                 </button>
-                <button @onclick='() => mainTab = "scraper"' class="flex-1 sm:flex-none px-4 py-2 rounded-lg transition border @(mainTab == "scraper" ? "bg-cyan-600 text-white border-cyan-500 shadow-md" : "bg-transparent text-slate-400 border-transparent hover:text-white")">
+                <button @onclick='() => mainTab = "scraper"'
+                        style="flex: 1; padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid @(mainTab == "scraper" ? "var(--border-cyan)" : "transparent"); background: @(mainTab == "scraper" ? "rgba(6,182,212,0.2)" : "transparent"); color: @(mainTab == "scraper" ? "var(--accent-cyan)" : "var(--text-muted)"); cursor: pointer; transition: all 0.2s;">
                     ⚡ URL Scraper
                 </button>
             </div>
 
             @if (mainTab == "search")
             {
-                <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-3">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div style="width: 100%; background: var(--bg-card); backdrop-filter: blur(16px); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem; box-shadow: var(--shadow-heavy); display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
                         <input @bind="searchQuery" @bind:event="oninput" @onkeyup="HandleKeyUp"
                                placeholder="Ask any complex research question..."
                                disabled="@(isLoading || rateLimitHit)"
-                               class="w-full bg-transparent px-3 py-2.5 sm:px-4 sm:py-3 text-slate-100 placeholder-slate-500 focus:outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed border border-slate-800 sm:border-0 rounded-xl sm:rounded-none" />
+                               style="flex: 1; background: transparent; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem 1.1rem; color: var(--text-main); font-size: 1rem; outline: none; font-family: 'Inter', sans-serif;" />
                         <button @onclick="PerformSearch" disabled="@(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery))"
-                                class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto">
-                            @if (isLoading)
-                            {
-                                <span class="animate-spin text-sm">🔄</span>
-                                <span>Reasoning...</span>
-                            }
-                            else
-                            {
-                                <span>Inspect 🦙</span>
-                            }
+                                style="background: var(--gradient-brand); color: #fff; border: none; padding: 0.85rem 1.5rem; border-radius: var(--radius-sm); font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: var(--shadow-glow); white-space: nowrap; transition: all 0.2s; opacity: @(isLoading || rateLimitHit || string.IsNullOrWhiteSpace(searchQuery) ? 0.4 : 1);">
+                            @if (isLoading) { <span>🔄 Reasoning...</span> } else { <span>Inspect 🦙</span> }
                         </button>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-2 py-2 border-t border-slate-800/60 text-xs text-slate-400">
-                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
-                            <span class="text-slate-500 font-medium hidden sm:inline">Engine:</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 0.75rem; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--text-dim);">Engine:</span>
                             <button @onclick='() => selectedMode = "deep_reasoning"'
-                                    class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "deep_reasoning" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400")">
+                                    style="padding: 0.3rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid @(selectedMode == "deep_reasoning" ? "var(--border-indigo)" : "var(--border-color)"); background: @(selectedMode == "deep_reasoning" ? "rgba(99,102,241,0.2)" : "transparent"); color: @(selectedMode == "deep_reasoning" ? "var(--accent-indigo)" : "var(--text-dim)"); cursor: pointer; font-weight: 600; font-size: 0.75rem;">
                                 🧠 Deep Multi-Hop
                             </button>
                             <button @onclick='() => selectedMode = "standard"'
-                                    class="px-2 py-1 rounded-lg font-semibold transition text-[11px] sm:text-xs border @(selectedMode == "standard" ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "bg-slate-950/60 border-slate-800 text-slate-400")">
+                                    style="padding: 0.3rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid @(selectedMode == "standard" ? "var(--border-cyan)" : "var(--border-color)"); background: @(selectedMode == "standard" ? "rgba(6,182,212,0.15)" : "transparent"); color: @(selectedMode == "standard" ? "var(--accent-cyan)" : "var(--text-dim)"); cursor: pointer; font-weight: 600; font-size: 0.75rem;">
                                 ⚡ Instant
                             </button>
                         </div>
-                        <div class="flex items-center justify-between w-full sm:w-auto gap-3">
-                            <label class="flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition text-[11px] sm:text-xs">
-                                <input type="checkbox" @bind="deepCrawl" class="rounded bg-slate-950 border-slate-700 text-indigo-600" />
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.75rem;">
+                                <input type="checkbox" @bind="deepCrawl" />
                                 <span>Deep Multi-Tab</span>
                             </label>
                             @if (userStatus != null)
                             {
                                 @if (userStatus.IsPro)
                                 {
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-semibold text-[10px]">
-                                        ✦ Pro Pass
-                                    </span>
+                                    <span class="badge-tag" style="background: rgba(99,102,241,0.15); color: var(--accent-indigo); border: 1px solid var(--border-indigo);">✦ Pro Pass</span>
                                 }
                                 else
                                 {
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full @UsagePillClass font-mono text-[10px]">
-                                        🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left
-                                    </span>
+                                    <span class="badge-tag" style="background: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color);">🔍 @userStatus.SearchesRemaining/@userStatus.DailyLimit left</span>
                                 }
                             }
                         </div>
@@ -213,11 +200,11 @@
     </section>
 
     @* SCREEN 2: Synthesis *@
-    <section id="screen-synthesis" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-y-auto hide-scrollbar">
-        <div class="max-w-4xl mx-auto w-full space-y-6">
+    <section id="screen-synthesis" style="width: 100%; height: 100vh; flex-shrink: 0; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: flex-start; padding: 2rem 2rem 5rem; overflow-y: auto;">
+        <div style="max-width: 900px; margin: 2rem auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
             @if (result != null)
             {
-                <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
+                <div class="glass-card" style="border-color: var(--border-indigo);">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
                         <div>
                             <div class="flex items-center gap-2">
@@ -230,31 +217,31 @@
                                 Research Objective: "<span class="text-indigo-300">@result.Query</span>"
                             </h2>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 text-xs">
-                            <button @onclick="GeneratePdfReport" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.78rem;">
+                            <button @onclick="GeneratePdfReport" style="background: var(--gradient-brand); color: #fff; font-weight: 800; padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem;">
                                 <span>📄 PDF</span>
                             </button>
-                            <button @onclick="ExportAsMarkdown" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl transition">
+                            <button @onclick="ExportAsMarkdown" style="background: var(--bg-secondary); color: var(--text-main); padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.78rem;">
                                 📥 MD
                             </button>
                         </div>
                     </div>
                     
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Executive Synthesis</h3>
-                    <div class="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line">
+                    <h3 style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">Executive Synthesis</h3>
+                    <div style="color: var(--text-main); font-size: 0.9rem; line-height: 1.7; white-space: pre-line;">
                         @result.Synthesis
                     </div>
 
                     @if (result.ReasoningTrace.Any())
                     {
-                        <div class="mt-8 pt-6 border-t border-slate-800">
-                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Cognitive Reasoning Trace</h4>
-                            <div class="space-y-2">
+                        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                            <h4 style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">Cognitive Reasoning Trace</h4>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 @foreach (var step in result.ReasoningTrace)
                                 {
-                                    <div class="text-xs text-slate-400 flex items-start gap-2">
-                                        <span class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-mono font-bold shrink-0 mt-0.5">@step.Step</span>
-                                        <span class="leading-relaxed">@step.Description</span>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 0.6rem;">
+                                        <span style="width: 1.35rem; height: 1.35rem; border-radius: 50%; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--accent-indigo); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; flex-shrink: 0; margin-top: 0.1rem;">@step.Step</span>
+                                        <span style="line-height: 1.5;">@step.Description</span>
                                     </div>
                                 }
                             </div>
@@ -264,56 +251,50 @@
             }
             else
             {
-                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-4 my-auto">
-                    <span class="text-5xl opacity-40">🧠</span>
-                    <h3 class="text-xl font-bold text-white">Executive Synthesis Pending</h3>
-                    <p class="text-sm text-slate-400 max-w-md">
-                        Submit a research query on Screen 1 to generate an autonomous edge-synthesized intelligence brief.
-                    </p>
-                    <button @onclick='() => ScrollToScreen("screen-search")' class="mt-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
-                        ← Back to Search (Screen 1)
-                    </button>
+                <div class="glass-card" style="padding: 3rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                    <span style="font-size: 3.5rem; opacity: 0.35;">🧠</span>
+                    <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">Executive Synthesis Pending</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 400px; line-height: 1.6;">Submit a research query on Screen 1 to generate an autonomous edge-synthesized intelligence brief.</p>
+                    <button @onclick='() => ScrollToScreen("screen-search")' class="btn-primary-custom" style="margin-top: 0.5rem;">← Back to Search</button>
                 </div>
             }
         </div>
     </section>
 
     @* SCREEN 3: Data Matrix (Claims & Entities) *@
-    <section id="screen-data" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-y-auto hide-scrollbar">
-        <div class="max-w-5xl mx-auto w-full space-y-8">
+    <section id="screen-data" style="width: 100%; height: 100vh; flex-shrink: 0; scroll-snap-align: start; display: flex; flex-direction: column; padding: 2rem 2rem 5rem; overflow-y: auto;">
+        <div style="max-width: 1100px; margin: 2rem auto; width: 100%; display: flex; flex-direction: column; gap: 2rem;">
             @if (result != null)
             {
                 @if (result.Claims.Any())
                 {
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <span>🔍 Verified Claims Matrix</span>
-                            <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px]">@result.Claims.Count</span>
+                            <span style="padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(99,102,241,0.15); color: var(--accent-indigo); font-size: 0.65rem;">@result.Claims.Count</span>
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
                             @foreach (var claim in result.Claims)
                             {
-                                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
                                     <div>
-                                        <div class="flex justify-between items-start mb-2 gap-2">
-                                            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] @GetEpistemicBadgeClass(claim.EpistemicStatus)">
-                                                @claim.EpistemicStatus
-                                            </span>
-                                            <span class="text-xs font-bold text-slate-300 flex items-center gap-1">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.5rem;">
+                                            <span style="padding: 0.15rem 0.55rem; border-radius: 999px; font-weight: 800; font-size: 0.65rem; @GetEpistemicBadgeStyle(claim.EpistemicStatus)">@claim.EpistemicStatus</span>
+                                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
                                                 @claim.ConfidenceScore%
-                                                <div class="w-8 bg-slate-800 h-1.5 rounded-full overflow-hidden ml-1">
-                                                    <div class="bg-indigo-500 h-full" style="width: @(claim.ConfidenceScore)%"></div>
+                                                <div style="width: 2rem; height: 4px; background: var(--bg-secondary); border-radius: 999px; overflow: hidden;">
+                                                    <div style="background: var(--accent-indigo); height: 100%; width: @(claim.ConfidenceScore)%;"></div>
                                                 </div>
                                             </span>
                                         </div>
-                                        <p class="font-semibold text-slate-100 text-sm">@claim.Statement</p>
-                                        <p class="font-mono text-[10px] text-slate-400 italic bg-slate-950/40 p-2 rounded mt-2 border border-slate-800">
+                                        <p style="font-weight: 600; color: var(--text-main); font-size: 0.88rem;">@claim.Statement</p>
+                                        <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); font-style: italic; background: rgba(0,0,0,0.25); padding: 0.5rem 0.65rem; border-radius: var(--radius-sm); margin-top: 0.5rem; border: 1px solid var(--border-color);">
                                             "@claim.VerbatimQuote"
                                         </p>
                                     </div>
-                                    <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px]">
-                                        <a href="@claim.SourceUrl" target="_blank" class="text-indigo-400 hover:underline truncate max-w-[200px]">@claim.SourceTitle</a>
-                                        <button @onclick='() => RunPreset($"Deep research details on {claim.Statement}")' class="px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 transition">
+                                    <div style="padding-top: 0.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem;">
+                                        <a href="@claim.SourceUrl" target="_blank" style="color: var(--accent-indigo); text-decoration: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@claim.SourceTitle</a>
+                                        <button @onclick='() => RunPreset($"Deep research details on {claim.Statement}")' style="padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.68rem;">
                                             Sub-Crawl
                                         </button>
                                     </div>
@@ -325,21 +306,21 @@
 
                 @if (result.Entities.Any())
                 {
-                    <div class="pt-4 border-t border-slate-800/50">
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <h3 style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                             <span>🌐 Entity Knowledge Graph</span>
-                            <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px]">@result.Entities.Count</span>
+                            <span style="padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(99,102,241,0.15); color: var(--accent-indigo); font-size: 0.65rem;">@result.Entities.Count</span>
                         </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
                             @foreach (var entity in result.Entities)
                             {
-                                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                                     <div>
-                                        <div class="flex items-center justify-between gap-2 mb-2">
-                                            <h4 class="font-bold text-indigo-300 text-sm">@entity.Name</h4>
-                                            <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-400 text-[9px] font-semibold uppercase">@entity.Category</span>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <h4 style="font-weight: 800; color: var(--accent-indigo); font-size: 0.88rem;">@entity.Name</h4>
+                                            <span style="padding: 0.1rem 0.4rem; border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-muted); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">@entity.Category</span>
                                         </div>
-                                        <p class="text-[11px] text-slate-300 leading-relaxed">@entity.Description</p>
+                                        <p style="font-size: 0.78rem; color: var(--text-main); line-height: 1.5;">@entity.Description</p>
                                     </div>
                                 </div>
                             }
@@ -349,24 +330,23 @@
             }
             else
             {
-                <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-4 my-auto">
-                    <span class="text-5xl opacity-40">🌐</span>
-                    <h3 class="text-xl font-bold text-white">Data Matrix Awaiting Telemetry</h3>
-                    <p class="text-sm text-slate-400 max-w-md">
-                        Claim verification matrices and knowledge graphs will materialize here once search execution completes.
-                    </p>
+                <div class="glass-card" style="padding: 2.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                    <span style="font-size: 3rem; opacity: 0.35;">🌐</span>
+                    <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); font-family: 'Outfit', sans-serif;">Data Matrix Awaiting Telemetry</h3>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 380px; line-height: 1.6;">Claim verification matrices and knowledge graphs will materialize here once search execution completes.</p>
+                    <button @onclick='() => ScrollToScreen("screen-search")' class="btn-primary-custom" style="margin-top: 0.5rem;">← Back to Search</button>
                 </div>
             }
         </div>
     </section>
 
     @* SCREEN 4: The /grill-me Stepper Deck *@
-    <section id="screen-grill" class="w-full h-screen shrink-0 snap-start snap-always flex flex-col justify-center p-4 sm:p-8 pt-20 pb-24 relative overflow-hidden bg-[var(--bg-darker)]">
-        <div class="max-w-3xl mx-auto w-full h-full flex flex-col pt-16 sm:pt-0 justify-center">
-            <div class="text-center mb-6 shrink-0">
-                <span class="text-4xl mb-3 block animate-pulse">🎯</span>
-                <h3 class="font-black text-2xl text-[var(--text-white)] tracking-tight">Interactive Decision Engine</h3>
-                <p class="text-sm text-[var(--text-dark-muted)] mt-2">The AI paused at key research branches. Swipe through the deck and select your preferred paths for downstream evaluation.</p>
+    <section id="screen-grill" style="width: 100%; height: 100vh; flex-shrink: 0; scroll-snap-align: start; display: flex; flex-direction: column; padding: 2rem 2rem 5rem; overflow: hidden; background: radial-gradient(circle at top, rgba(99, 102, 241, 0.06), transparent 60%);">
+        <div style="max-width: 860px; margin: 0 auto; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">🎯</span>
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.75rem; color: var(--text-main); letter-spacing: -0.02em;">Interactive Decision Engine</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.35rem;">The AI paused at key research branches. Select your paths for downstream evaluation.</p>
             </div>
 
             @if (result != null && result.GrillNodes != null && result.GrillNodes.Any())
@@ -520,12 +500,12 @@
         }
     }
 
-    private string GetEpistemicBadgeClass(string status) => status switch
+    private string GetEpistemicBadgeStyle(string status) => status switch
     {
-        "Fact" => "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40",
-        "Disputed" => "bg-red-500/20 text-red-300 border border-red-500/40",
-        "Marketing" => "bg-amber-500/20 text-amber-300 border border-amber-500/40",
-        _ => "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
+        "Fact" => "background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);",
+        "Disputed" => "background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);",
+        "Marketing" => "background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);",
+        _ => "background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4);"
     };
 
     private async Task EnsureJwtAttached()
@@ -645,7 +625,14 @@
                 activeTab = "synthesis";
                 await IncrementCreditTickerState(credits: 2, estimatedTokens: 1200);
                 await RefreshUserStatus();
-                await ScrollToScreen("screen-synthesis");
+                if (result?.GrillNodes != null && result.GrillNodes.Any())
+                {
+                    await ScrollToScreen("screen-grill");
+                }
+                else
+                {
+                    await ScrollToScreen("screen-synthesis");
+                }
             }
             else if ((int)response.StatusCode == 429)
             {

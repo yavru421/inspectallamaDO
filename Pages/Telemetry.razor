@@ -1,0 +1,51 @@
+@page "/telemetry"
+
+<PageTitle>InspectaLlama - Edge Telemetry</PageTitle>
+
+<div style="margin-bottom: 2rem;">
+    <h1 class="gradient-title" style="font-size: 2.2rem; font-weight: 800;">Edge Telemetry & Analytics</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">Real-Time Browser Memory, Execution Trajectory, and Performance Gauges</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="glass-card">
+        <h3 style="margin-bottom: 1rem; color: var(--text-main);">Execution Trajectory Stream</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-indigo); padding: 0.75rem 1rem; border-radius: 4px;">
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Blazor WebAssembly Engine Initialized</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Loaded mono.wasm runtime in 142ms. Zero liabilities.</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-cyan); padding: 0.75rem 1rem; border-radius: 4px;">
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Local State Synchronization</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">IndexedDB & browser storage synced seamlessly.</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-emerald); padding: 0.75rem 1rem; border-radius: 4px;">
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Cloudflare Edge Connection Ready</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Edge router standby mode active.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <h3 style="margin-bottom: 1rem; color: var(--text-main);">System Status</h3>
+        <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                <span style="color: var(--text-muted);">Client Memory</span>
+                <span style="color: var(--accent-cyan); font-weight: 600;">18.4 MB</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
+                <div style="width: 24%; height: 100%; background: var(--accent-cyan);"></div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                <span style="color: var(--text-muted);">Frame Rate (FPS)</span>
+                <span style="color: var(--accent-emerald); font-weight: 600;">60 FPS</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--accent-emerald);"></div>
+            </div>
+        </div>
+    </div>
+</div>

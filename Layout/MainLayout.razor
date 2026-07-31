@@ -1,292 +1,38 @@
 @inherits LayoutComponentBase
-@inject HttpClient Http
-@inject IJSRuntime JS
 
-<div class="fixed inset-0 bg-slate-950 text-slate-100 font-sans overflow-hidden">
-    <header class="absolute top-0 left-0 right-0 z-50 pointer-events-none px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-3 pointer-events-auto">
-            <span class="text-xl sm:text-2xl">🦙🔍</span>
-            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white">Inspecta<span class="text-indigo-400">Llama</span></span>
-            <div class="do-power-badge text-[10px] sm:text-xs" title="Stateless edge AI routing powered by Cloudflare Workers AI">
-                <span class="do-bolt">⚡</span>
-                <span class="do-label">POWERED BY <strong class="do-highlight">CLOUDFLARE WORKERS AI</strong></span>
-            </div>
-            @* Live Token & Credit Ticker Badge *@
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-indigo-500/40 text-xs font-mono shadow-md @(isTickerAnimating ? "animate-ticker-pulse border-amber-400 text-amber-300" : "text-indigo-300")"
-                 title="ZLA Edge Credit & Token Usage Ticker">
-                <span class="text-amber-400">⚡</span>
-                <span class="font-bold">@creditsUsed</span><span class="text-slate-500">/100 Credits</span>
-                <span class="text-slate-600">|</span>
-                <span class="text-cyan-400 font-semibold">~@FormattedTokens Tokens</span>
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-badge">ZLA</div>
+            <div>
+                <div class="sidebar-title">InspectaLlama</div>
+                <div class="sidebar-subtitle">Research Engine</div>
             </div>
         </div>
-        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pointer-events-auto">
-            @if (userSession != null && userSession.IsAuthenticated)
-            {
-                <div class="flex items-center gap-2 sm:gap-3 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
-                    <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-400 text-white font-bold flex items-center justify-center text-[10px] sm:text-xs">
-                        @(string.IsNullOrEmpty(userSession.Name) ? "D" : userSession.Name.Substring(0, 1).ToUpper())
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-slate-200 text-xs">@userSession.Name</span>
-                        <span class="text-[9px] sm:text-[10px] text-slate-400 max-w-[100px] truncate">@userSession.Email</span>
-                    </div>
-                    
-                    @if (isPro || userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise")
-                    {
-                        <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
-                           class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase hover:bg-emerald-500/30 transition">
-                            👑 Pro
-                        </a>
-                    }
-                    else
-                    {
-                        <a href="https://personalization.dondlingergc.com/credits" target="_blank"
-                           class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 font-mono transition">
-                            💳 @userSession.CreditBalance
-                        </a>
-                    }
 
-                    <button @onclick="() => showSettingsModal = true" title="Manage Account & Settings"
-                       class="ml-1 text-slate-400 hover:text-white transition flex items-center gap-1 text-xs">
-                        ⚙️
-                    </button>
-                </div>
-            }
-            else
-            {
-                <div class="flex items-center gap-2">
-                    <button @onclick="() => showSettingsModal = true" title="Settings"
-                       class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
-                        ⚙️ <span class="hidden sm:inline">Settings</span>
-                    </button>
-                    <a href="https://personalization.dondlingergc.com" target="_blank"
-                       class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition border border-indigo-500/30 rounded-lg px-2.5 py-1.5 bg-indigo-500/10 whitespace-nowrap">
-                        🔑 Sign In
-                    </a>
-                </div>
-            }
+        <nav class="nav-menu">
+            <NavLink class="nav-link-custom" href="" Match="NavLinkMatch.All">
+                <span>⚡</span> Command Center
+            </NavLink>
+            <NavLink class="nav-link-custom" href="evaluator">
+                <span>🌐</span> URL Evaluator
+            </NavLink>
+            <NavLink class="nav-link-custom" href="scraper">
+                <span>🔍</span> Inference Scraper
+            </NavLink>
+            <NavLink class="nav-link-custom" href="research">
+                <span>🔬</span> Deep Research
+            </NavLink>
+            <NavLink class="nav-link-custom" href="telemetry">
+                <span>📊</span> Edge Telemetry
+            </NavLink>
+            <NavLink class="nav-link-custom" href="settings">
+                <span>⚙️</span> Vault & State
+            </NavLink>
+        </nav>
+    </aside>
 
-            @if (isPro)
-            {
-                <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
-                   class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1.5 hover:bg-emerald-500/30 transition">
-                    <span>👑</span> Pro
-                </a>
-            }
-            else
-            {
-                <a href="https://personalization.dondlingergc.com/subscription" target="_blank"
-                   class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5 whitespace-nowrap">
-                    <span>Upgrade Pro →</span>
-                </a>
-            }
-        </div>
-    </header>
-
-    <main class="w-full h-full relative">
+    <main class="main-content">
         @Body
     </main>
-
-    @* ── Native In-App Settings Modal ── *@
-    @if (showSettingsModal)
-    {
-        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-indigo-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-xl">⚙️</span>
-                        <div>
-                            <h3 class="font-bold text-white text-lg">InspectaLlama Settings</h3>
-                            <p class="text-xs text-slate-400">Zero-Liability Architecture & Platform Configuration</p>
-                        </div>
-                    </div>
-                    <button @onclick="() => showSettingsModal = false" class="text-slate-400 hover:text-white font-bold text-xl px-2">&times;</button>
-                </div>
-
-                <div class="space-y-4 text-xs">
-                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
-                        <span class="text-indigo-400 font-bold uppercase tracking-wider text-[10px]">Session Status</span>
-                        <div class="text-slate-200 font-semibold">
-                            @(userSession?.IsAuthenticated == true ? $"Logged in as {userSession.Name} ({userSession.Email})" : "Guest Mode (Zero-Liability Architecture - 100% Client-Side)")
-                        </div>
-                        <div class="text-slate-400 font-mono text-[11px]">
-                            Credit Balance: <strong class="text-indigo-300">@(userSession?.CreditBalance ?? 0)</strong>
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-                        <span class="text-cyan-400 font-bold uppercase tracking-wider text-[10px]">Edge Compute Engine</span>
-                        <div class="flex items-center justify-between text-slate-300">
-                            <span>Llama 3.3 70B Edge Router</span>
-                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">ONLINE</span>
-                        </div>
-                        <div class="flex items-center justify-between text-slate-300">
-                            <span>Cloudflare Workers AI (10,000 RTN/day Free Tier)</span>
-                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">ACTIVE ($0 COST)</span>
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-                        <span class="text-amber-400 font-bold uppercase tracking-wider text-[10px]">Local Storage & Data</span>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">Clear Local Research Cache</span>
-                            <button @onclick="ClearLocalCache" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition">
-                                Purge Cache
-                            </button>
-                        </div>
-                        @if (!string.IsNullOrEmpty(settingsNotice))
-                        {
-                            <div class="text-[11px] text-emerald-400 font-mono">@settingsNotice</div>
-                        }
-                    </div>
-                </div>
-
-                <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
-                    <a href="https://personalization.dondlingergc.com" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
-                        Personalization Portal ↗
-                    </a>
-                    <button @onclick="() => showSettingsModal = false" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition">
-                        Done
-                    </button>
-                </div>
-            </div>
-        </div>
-    }
-
-    <footer class="absolute bottom-4 left-0 right-0 z-50 pointer-events-none text-center text-[10px] text-slate-500 flex flex-col items-center gap-1 opacity-50">
-        <div>InspectaLlama Engine &copy; 2026 &bull; Cloudflare Workers AI Edge Router</div>
-        <div class="text-[9px] text-slate-600">Integrated with Central Dondlinger Identity Portal</div>
-    </footer>
 </div>
-
-@code {
-    private bool isPro = false;
-    private bool isCheckoutLoading = false;
-    private PersonalizationSession? userSession = null;
-    private bool showSettingsModal = false;
-    private string settingsNotice = "";
-
-    private int creditsUsed = 0;
-    private int tokensProcessed = 0;
-    private bool isTickerAnimating = false;
-
-    private string FormattedTokens => tokensProcessed >= 1000 ? $"{(tokensProcessed / 1000.0):F1}k" : tokensProcessed.ToString();
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await LoadCreditTickerState();
-            await FetchUserSession();
-            StateHasChanged();
-        }
-    }
-
-    private async Task LoadCreditTickerState()
-    {
-        try
-        {
-            var raw = await JS.InvokeAsync<string>("zlaInterop.getCreditTickerState");
-            if (!string.IsNullOrEmpty(raw))
-            {
-                var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var ticker = System.Text.Json.JsonSerializer.Deserialize<InspectaLlamaDO.Models.CreditTickerState>(raw, opts);
-                if (ticker != null)
-                {
-                    creditsUsed = ticker.CreditsUsed;
-                    tokensProcessed = ticker.TokensProcessed;
-                }
-            }
-        }
-        catch { }
-    }
-
-    private async Task FetchUserSession()
-    {
-        try
-        {
-            var sessionJson = await JS.InvokeAsync<string>("zlaInterop.checkPersonalizationSession");
-            if (!string.IsNullOrEmpty(sessionJson))
-            {
-                userSession = System.Text.Json.JsonSerializer.Deserialize<PersonalizationSession>(sessionJson, new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (userSession != null && (userSession.SubscriptionTier.ToLower() == "pro" || userSession.SubscriptionTier.ToLower() == "enterprise"))
-                {
-                    isPro = true;
-                }
-            }
-
-            var res = await Http.GetFromJsonAsync<UserStatusResponse>("/api/user/status");
-        }
-        catch (Exception)
-        {
-            // Fallback for offline ZLA execution
-        }
-    }
-
-    private async Task ClearLocalCache()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("localStorage.clear");
-            await JS.InvokeVoidAsync("sessionStorage.clear");
-            settingsNotice = "✓ Local research cache purged successfully.";
-        }
-        catch
-        {
-            settingsNotice = "Failed to clear local cache.";
-        }
-    }
-
-    private async Task InitiateStripeCheckout()
-    {
-        isCheckoutLoading = true;
-        try
-        {
-            var response = await Http.PostAsync("/api/stripe/checkout", null);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<StripeCheckoutResponse>();
-                if (!string.IsNullOrEmpty(result?.Url))
-                {
-                    await JS.InvokeVoidAsync("open", result.Url, "_self");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Stripe error: {ex.Message}");
-        }
-        finally
-        {
-            isCheckoutLoading = false;
-        }
-    }
-
-    public class PersonalizationSession
-    {
-        public bool IsAuthenticated { get; set; }
-        public string UserId { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string SubscriptionTier { get; set; } = "free";
-        public int CreditBalance { get; set; }
-        public string AvatarUrl { get; set; } = "";
-    }
-
-    public class UserStatusResponse
-    {
-        public string UserId { get; set; } = "";
-        public string Tier { get; set; } = "";
-        public bool IsPro { get; set; }
-    }
-
-    public class StripeCheckoutResponse
-    {
-        public string Url { get; set; } = "";
-    }
-}

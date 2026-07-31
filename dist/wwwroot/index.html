@@ -1,76 +1,113 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>InspectaLlama &bull; Next-Gen AI Web Search Engine</title>
     <base href="/" />
 
+    <meta name="description" content="Autonomous web graph traversal, dialectical claim verification, and source audits powered by Cloudflare Workers AI." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="icon" type="image/png" href="icon-192.png" />
     <link href="manifest.webmanifest" rel="manifest" />
-    <link href="InspectaLlamaDO.styles.css?v=20260730_v99" rel="stylesheet" />
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            100: '#c9d1d9',
-                            200: '#c9d1d9',
-                            300: '#8b949e',
-                            400: '#8b949e',
-                            500: '#8b949e',
-                            600: '#8b949e',
-                            700: '#30363d',
-                            800: '#30363d',
-                            900: '#161b22',
-                            950: '#0d1117',
-                        },
-                        indigo: {
-                            300: '#2ea043',
-                            400: '#238636',
-                            500: '#2ea043',
-                            600: '#238636',
-                        },
-                        cyan: {
-                            300: '#2ea043',
-                            400: '#238636',
-                            500: '#2ea043',
-                            600: '#238636',
-                        }
-                    }
-                }
-            }
+    <!-- Custom CSS design system ONLY — no Tailwind -->
+    <link href="css/app.css?v=20260731_v1" rel="stylesheet" />
+    <link href="InspectaLlamaDO.styles.css?v=20260731_v1" rel="stylesheet" />
+
+    <style>
+        /* Boot loader styles */
+        html, body { margin: 0; padding: 0; background: #070a12; color: #f8fafc; font-family: 'Inter', sans-serif; }
+
+        .boot-loader {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 1.5rem;
+            background: radial-gradient(circle at 30% 20%, rgba(6, 182, 212, 0.08), transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(99, 102, 241, 0.08), transparent 50%),
+                        #070a12;
         }
-    </script>
-    <link href="css/app.css?v=20260730_v99" rel="stylesheet" />
+
+        .boot-brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #06b6d4, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .boot-progress-wrap {
+            width: 280px;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .boot-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #6366f1);
+            border-radius: 999px;
+            width: var(--blazor-load-percentage, 0%);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
+        }
+
+        .boot-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .boot-label::after {
+            content: var(--blazor-load-percentage-text, "0") "%";
+            color: #06b6d4;
+            margin-left: 0.3rem;
+        }
+
+        /* Blazor error bar */
+        #blazor-error-ui {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(127, 29, 29, 0.95);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            z-index: 9999;
+        }
+
+        #blazor-error-ui a {
+            color: #f87171;
+            font-weight: 700;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body>
     <div id="app">
-        <div class="shotstack-loader">
-            <div class="spinner"></div>
-            <span class="loading-text">Mounting InspectaLlama Edge Core...</span>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: var(--blazor-load-percentage, 0%)"></div>
+        <div class="boot-loader">
+            <div class="boot-brand">InspectaLlama</div>
+            <div class="boot-progress-wrap">
+                <div class="boot-progress-fill"></div>
             </div>
-            <style>
-                .progress-text::after {
-                    content: var(--blazor-load-percentage-text, "0") "%";
-                }
-            </style>
-            <span class="progress-text">Loading... </span>
+            <span class="boot-label">Mounting Edge Core...</span>
         </div>
     </div>
 
-    <div id="blazor-error-ui" class="hidden fixed bottom-0 left-0 right-0 bg-red-900/90 text-white p-4 text-center text-sm z-50">
+    <div id="blazor-error-ui">
         An unhandled error has occurred.
-        <a href="" class="underline font-bold ml-2">Reload</a>
+        <a href="">Reload</a>
     </div>
 
     <script src="_framework/blazor.webassembly.js"></script>

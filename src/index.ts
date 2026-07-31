@@ -191,9 +191,9 @@ export default {
               crawlTargets.map(async (target) => {
                 try {
                   const controller = new AbortController();
-                  const timeoutId = setTimeout(() => controller.abort(), 3000);
+                  const timeoutId = setTimeout(() => controller.abort(), 2000);
                   const res = await fetch(target.url, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
                     signal: controller.signal
                   });
                   clearTimeout(timeoutId);
@@ -202,7 +202,7 @@ export default {
                                        .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, '')
                                        .replace(/<[^>]+>/g, ' ')
                                        .replace(/\s+/g, ' ')
-                                       .slice(0, 2500);
+                                       .slice(0, 1500);
                   return `--- SOURCE: ${target.title} (${target.url}) ---\n${cleanText}`;
                 } catch (e) {
                   return `--- SOURCE: ${target.title} (${target.url}) ---\n(Extracted from snippet: ${target.snippet})`;
