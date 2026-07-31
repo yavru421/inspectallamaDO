@@ -411,11 +411,75 @@ code, pre, .font-mono {
     white-space: nowrap;
 }
 
-.step-connector {
-    flex: 1;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    min-width: 20px;
+/* Mobile & Responsive Breakpoints */
+@media (max-width: 900px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem;
+        box-shadow: none;
+    }
+
+    .sidebar-header {
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        gap: 0.4rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-link-custom {
+        padding: 0.6rem 0.85rem;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+        max-width: 100%;
+    }
+
+    .grillme-wizard {
+        padding: 1.25rem;
+    }
+
+    .grillme-options-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-primary-custom, .btn-secondary-custom {
+        min-height: 48px; /* Touch Target standard */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .pipeline-step-item {
+        padding: 0.35rem 0.6rem;
+    }
+
+    .step-name {
+        font-size: 0.75rem;
+    }
+
+    .step-connector {
+        min-width: 10px;
+    }
 }
+
 
 

@@ -123,9 +123,17 @@ else
                         ContextQuestion = q.ContextQuestion,
                         Options = q.Options.Select(o => new GrillOption { Text = o.Text, IsRecommended = o.IsRecommended, Rationale = o.Rationale }).ToList()
                     }).ToList();
-                    State.SetGrillQuestions(questions);
+                }
+                else
+                {
+                    questions = GetFallbackQuestions();
                 }
             }
+            else
+            {
+                questions = GetFallbackQuestions();
+            }
+            State.SetGrillQuestions(questions);
         }
         catch (Exception)
         {
@@ -165,29 +173,35 @@ else
         {
             new InteractiveGrillNode {
                 StepIndex = 0,
-                Title = "Research Depth & Graph Traversal",
+                Title = "Research Depth & Graph Traversal Scope",
                 ContextQuestion = $"What scope of cognitive graph analysis should be conducted for \"{topic}\"?",
                 Options = new List<GrillOption> {
                     new GrillOption { Text = "(Recommended) Bare-Metal Edge Sweep", IsRecommended = true, Rationale = "Multi-hop web graph extraction with epistemic confidence scoring." },
-                    new GrillOption { Text = "Targeted Claim Audit", IsRecommended = false, Rationale = "Fast extraction focused on high-priority dialectical claims." }
+                    new GrillOption { Text = "Targeted Dialectical Claim Audit", IsRecommended = false, Rationale = "Fast extraction focused strictly on high-priority dialectical claims." },
+                    new GrillOption { Text = "Exhaustive Web Graph Exploration", IsRecommended = false, Rationale = "Deep 4-hop link expansion across technical documentation & research papers." },
+                    new GrillOption { Text = "Strict Fact-Checking Mode", IsRecommended = false, Rationale = "High-precision verification filtering out non-factual marketing content." }
                 }
             },
             new InteractiveGrillNode {
                 StepIndex = 1,
-                Title = "Architecture & State Strategy",
+                Title = "Architecture & State Runtime Strategy",
                 ContextQuestion = $"Which architectural paradigm governs the implementation of \"{topic}\"?",
                 Options = new List<GrillOption> {
                     new GrillOption { Text = "(Recommended) Zero-Liability Architecture (ZLA)", IsRecommended = true, Rationale = "100% client-side WASM execution with zero server liability." },
-                    new GrillOption { Text = "Cloudflare Durable Objects", IsRecommended = false, Rationale = "Real-time edge state persistence and WebSocket dispatch." }
+                    new GrillOption { Text = "Cloudflare Durable Objects & WebSockets", IsRecommended = false, Rationale = "Real-time edge state persistence and live WebSocket broadcast." },
+                    new GrillOption { Text = "Hybrid Edge Workers Router", IsRecommended = false, Rationale = "Stateless edge function routing with D1 database caching." },
+                    new GrillOption { Text = "Pure WASM Client Isolation", IsRecommended = false, Rationale = "Strict offline-capable client state without edge workers API calls." }
                 }
             },
             new InteractiveGrillNode {
                 StepIndex = 2,
-                Title = "Epistemic Verification Threshold",
+                Title = "Epistemic Verification & Confidence Threshold",
                 ContextQuestion = "What confidence threshold is required for claim verification?",
                 Options = new List<GrillOption> {
                     new GrillOption { Text = "(Recommended) High Rigor (95%+ Confidence)", IsRecommended = true, Rationale = "Strict cross-source verification with verbatim quote extraction." },
-                    new GrillOption { Text = "Exploratory Synthesis (80%+ Confidence)", IsRecommended = false, Rationale = "Broad exploratory analysis across emergent source material." }
+                    new GrillOption { Text = "Exploratory Synthesis (80%+ Confidence)", IsRecommended = false, Rationale = "Broad exploratory analysis across emergent source material." },
+                    new GrillOption { Text = "Paranoid Audit (99%+ Absolute Rigor)", IsRecommended = false, Rationale = "Rejects any unverified source without 2+ primary domain citations." },
+                    new GrillOption { Text = "Rapid Consensus Sweep (70%+ Threshold)", IsRecommended = false, Rationale = "Fast synthesis prioritizing speed over verbatim quote extraction." }
                 }
             }
         };
