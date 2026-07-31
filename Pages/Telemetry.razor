@@ -1,51 +1,120 @@
 @page "/telemetry"
+@inject ResearchStateService State
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<PageTitle>InspectaLlama - Edge Telemetry</PageTitle>
+<PageTitle>InspectaLlama &bull; Pipeline Telemetry (Step 5)</PageTitle>
 
-<div style="margin-bottom: 2rem;">
-    <h1 class="gradient-title" style="font-size: 2.2rem; font-weight: 800;">Edge Telemetry & Analytics</h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem;">Real-Time Browser Memory, Execution Trajectory, and Performance Gauges</p>
+<div style="margin-bottom: 1.5rem;">
+    <span class="badge-tag badge-zla" style="margin-bottom: 0.5rem;">PIPELINE STEP 5 OF 5</span>
+    <h1 class="gradient-title" style="font-size: 2rem; font-weight: 800;">Pipeline Edge Telemetry</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">Execution metrics & performance telemetry for active topic: <strong style="color: var(--accent-cyan);">@(string.IsNullOrWhiteSpace(State.ActiveTopic) ? "Zero-Liability Architecture Blazor Edge Patterns" : State.ActiveTopic)</strong></p>
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
     <div class="glass-card">
-        <h3 style="margin-bottom: 1rem; color: var(--text-main);">Execution Trajectory Stream</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">Pipeline Execution History</h3>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-indigo); padding: 0.75rem 1rem; border-radius: 4px;">
-                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Blazor WebAssembly Engine Initialized</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Loaded mono.wasm runtime in 142ms. Zero liabilities.</div>
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Step 1: Command Center Prompt Entry</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Topic initialized: "@(string.IsNullOrWhiteSpace(State.ActiveTopic) ? "Zero-Liability Architecture Blazor Edge Patterns" : State.ActiveTopic)"</div>
             </div>
+
             <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-cyan); padding: 0.75rem 1rem; border-radius: 4px;">
-                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Local State Synchronization</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">IndexedDB & browser storage synced seamlessly.</div>
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Step 2: Grill-Me Decision Tree Matrix</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.3rem;">@State.SelectedAnswers.Count decision choices resolved:</div>
+                @if (State.SelectedAnswers.Count > 0)
+                {
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        @foreach (var kvp in State.SelectedAnswers)
+                        {
+                            <div style="font-size: 0.76rem; color: var(--text-main); font-family: 'JetBrains Mono', monospace;">
+                                • Step #@(kvp.Key + 1): <span style="color: var(--accent-cyan);">@kvp.Value</span>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
+
             <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-emerald); padding: 0.75rem 1rem; border-radius: 4px;">
-                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Cloudflare Edge Connection Ready</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Edge router standby mode active.</div>
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Step 3 & 4: Vector Audit & Report Synthesis</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                    @(State.CrawledSources.Count) sources crawled &bull; @(State.ExtractedClaims.Count) verified claims extracted.
+                </div>
             </div>
         </div>
     </div>
 
     <div class="glass-card">
-        <h3 style="margin-bottom: 1rem; color: var(--text-main);">System Status</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">Edge Health Metrics</h3>
         <div style="margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
-                <span style="color: var(--text-muted);">Client Memory</span>
-                <span style="color: var(--accent-cyan); font-weight: 600;">18.4 MB</span>
+                <span style="color: var(--text-muted);">Client WASM Memory</span>
+                <span style="color: var(--accent-cyan); font-weight: 600;">@usedHeapMb MB / @totalHeapMb MB</span>
             </div>
             <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
-                <div style="width: 24%; height: 100%; background: var(--accent-cyan);"></div>
+                <div style="width: 25%; height: 100%; background: var(--accent-cyan);"></div>
             </div>
         </div>
 
         <div style="margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
-                <span style="color: var(--text-muted);">Frame Rate (FPS)</span>
-                <span style="color: var(--accent-emerald); font-weight: 600;">60 FPS</span>
+                <span style="color: var(--text-muted);">Edge AI Latency</span>
+                <span style="color: var(--accent-emerald); font-weight: 600;">&lt;16 ms</span>
             </div>
             <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
                 <div style="width: 100%; height: 100%; background: var(--accent-emerald);"></div>
             </div>
         </div>
+
+        <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                <span style="color: var(--text-muted);">ZLA Compliance</span>
+                <span style="color: var(--accent-indigo); font-weight: 600;">100% Client-Side</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--accent-indigo);"></div>
+            </div>
+        </div>
     </div>
 </div>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <button class="btn-secondary-custom" @onclick='() => Nav.NavigateTo("research")'>
+        &larr; Back to Research Report (Step 4)
+    </button>
+
+    <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("")'>
+        🔄 Start New Pipeline at Step 1
+    </button>
+</div>
+
+@code {
+    private string usedHeapMb = "14.2";
+    private string totalHeapMb = "25.0";
+
+    protected override void OnInitialized()
+    {
+        State.CurrentStageIndex = 5;
+        if (string.IsNullOrWhiteSpace(State.ActiveTopic))
+        {
+            State.ActiveTopic = "Zero-Liability Architecture Blazor Edge Patterns";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var rawJson = await JS.InvokeAsync<string>("zlaInterop.getPerformanceMetrics");
+                using var doc = System.Text.Json.JsonDocument.Parse(rawJson);
+                if (doc.RootElement.TryGetProperty("usedHeapMb", out var u)) usedHeapMb = u.GetString() ?? usedHeapMb;
+                if (doc.RootElement.TryGetProperty("totalHeapMb", out var t)) totalHeapMb = t.GetString() ?? totalHeapMb;
+                StateHasChanged();
+            }
+            catch { }
+        }
+    }
+}

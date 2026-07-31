@@ -1,83 +1,144 @@
 @page "/research"
+@inject HttpClient Http
+@inject ResearchStateService State
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<PageTitle>InspectaLlama - Deep Research Engine</PageTitle>
+<PageTitle>InspectaLlama &bull; Synthesized Research Report (Step 4)</PageTitle>
 
-<div style="margin-bottom: 2rem;">
-    <h1 class="gradient-title" style="font-size: 2.2rem; font-weight: 800;">Deep Research Engine</h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem;">Multi-Track Intelligence & Bare-Metal Vector Queries</p>
-</div>
-
-<div class="glass-card" style="margin-bottom: 2rem;">
-    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-        <input type="text" @bind="searchQuery" @bind:event="oninput" placeholder="Search research vectors, keywords, or tags..." 
-               style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-sm); color: #fff; font-size: 0.95rem; outline: none;" />
-        <button class="btn-primary-custom" @onclick="AddResearchCard">New Vector (+)</button>
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <span class="badge-tag badge-zla" style="margin-bottom: 0.5rem;">PIPELINE STEP 4 OF 5</span>
+        <h1 class="gradient-title" style="font-size: 2rem; font-weight: 800;">Synthesized Research Report</h1>
+        <p style="color: var(--text-muted); margin-top: 0.25rem;">Publication-grade AI synthesis for: <strong style="color: var(--accent-cyan);">@State.ActiveTopic</strong></p>
     </div>
-</div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
-    @foreach (var item in FilteredItems)
+    @if (State.FinalResult != null)
     {
-        <div class="glass-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                <span class="badge-tag" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo); border: 1px solid rgba(99, 102, 241, 0.3);">@item.Category</span>
-                <span style="font-size: 0.75rem; color: var(--text-dim);">@item.Timestamp</span>
-            </div>
-            <h3 style="font-size: 1.15rem; color: var(--text-main); margin-bottom: 0.5rem;">@item.Title</h3>
-            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">@item.Snippet</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-                <span style="font-size: 0.78rem; color: var(--accent-cyan);">Status: @item.Status</span>
-                <button style="background: none; border: none; color: var(--accent-rose); font-size: 0.8rem; cursor: pointer;" @onclick="() => RemoveItem(item)">Remove</button>
-            </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-secondary-custom" style="padding: 0.5rem 0.9rem; font-size: 0.82rem;" @onclick="ExportMarkdown">
+                📄 Export Markdown
+            </button>
+            <button class="btn-primary-custom" style="padding: 0.5rem 0.9rem; font-size: 0.82rem;" @onclick="GeneratePdfReport">
+                ⚡ Print Executive PDF
+            </button>
         </div>
     }
 </div>
 
+@if (State.FinalResult != null)
+{
+    <!-- Report Output -->
+    <div class="glass-card" style="margin-bottom: 2rem; border-color: var(--border-cyan);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            <span class="badge-tag badge-zla">DIALECTICAL SYNTHESIS COMPLETE</span>
+            <span style="font-size: 0.8rem; color: var(--text-dim);">@State.FinalResult.Timestamp</span>
+        </div>
+
+        <div style="font-size: 1.02rem; line-height: 1.8; color: var(--text-main); white-space: pre-wrap; margin-bottom: 1.5rem;">
+            @State.FinalResult.Synthesis
+        </div>
+
+        @if (State.FinalResult.Claims != null && State.FinalResult.Claims.Count > 0)
+        {
+            <h3 style="font-size: 1.1rem; color: var(--accent-indigo); margin-bottom: 0.85rem; font-family: 'Outfit', sans-serif;">
+                Verified Claims Matrix (@State.FinalResult.Claims.Count)
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem;">
+                @foreach (var claim in State.FinalResult.Claims)
+                {
+                    <div style="background: rgba(0,0,0,0.35); border-left: 3px solid var(--accent-indigo); padding: 0.85rem 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.3rem;">
+                            <div style="font-weight: 700; color: var(--text-main);">@claim.Statement</div>
+                            <span class="badge-tag" style="background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid var(--border-emerald); font-size: 0.72rem;">@claim.EpistemicStatus (@claim.ConfidenceScore%)</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">
+                            Verbatim Quote: "<em>@claim.VerbatimQuote</em>" &bull; 
+                            <a href="@claim.SourceUrl" target="_blank" style="color: var(--accent-cyan); font-weight: 600;">@claim.SourceTitle</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (State.FinalResult.Sources != null && State.FinalResult.Sources.Count > 0)
+        {
+            <h3 style="font-size: 1.1rem; color: var(--accent-cyan); margin-bottom: 0.85rem; font-family: 'Outfit', sans-serif;">
+                Audited Edge Citations (@State.FinalResult.Sources.Count)
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                @foreach (var src in State.FinalResult.Sources)
+                {
+                    <div style="font-size: 0.85rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <a href="@src.Url" target="_blank" style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;">@src.Title</a> &bull;
+                        <span style="color: var(--text-dim);">@src.Snippet</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="glass-card" style="text-align: center; padding: 3rem;">
+        <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">Research Synthesis Pending</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">No synthesis generated yet for topic: "@State.ActiveTopic"</p>
+        <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("evaluator")'>← Run Vector Audit at Step 3</button>
+    </div>
+}
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <button class="btn-secondary-custom" @onclick='() => Nav.NavigateTo("evaluator")'>
+        &larr; Back to Vector Audit (Step 3)
+    </button>
+
+    <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("telemetry")'>
+        View Edge Telemetry (Step 5) &rarr;
+    </button>
+</div>
+
 @code {
-    private string searchQuery = "";
-
-    private class ResearchItem
+    protected override async Task OnInitializedAsync()
     {
-        public string Title { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Snippet { get; set; } = "";
-        public string Timestamp { get; set; } = "";
-        public string Status { get; set; } = "";
-    }
-
-    private List<ResearchItem> items = new List<ResearchItem>();
-
-    protected override void OnInitialized()
-    {
-        items = new List<ResearchItem>
+        State.CurrentStageIndex = 4;
+        if (string.IsNullOrWhiteSpace(State.ActiveTopic))
         {
-            new ResearchItem { Title = "Local WASM DuckDB Benchmarks", Category = "Compute", Snippet = "Analyzing browser in-memory SQL performance with zero backend latency.", Timestamp = "Today, 20:40", Status = "Verified" },
-            new ResearchItem { Title = "Cloudflare Durable Objects Cache-Busting", Category = "Edge", Snippet = "Strict no-store headers and sliding timestamp heartbeats for mobile clients.", Timestamp = "Today, 19:15", Status = "Active" },
-            new ResearchItem { Title = "Zero-Liability Architecture Patterns", Category = "Architecture", Snippet = "Building client-side applications with zero ongoing server maintenance.", Timestamp = "Yesterday", Status = "Complete" }
-        };
-    }
+            State.ActiveTopic = "Zero-Liability Architecture Blazor Edge Patterns";
+        }
 
-    private IEnumerable<ResearchItem> FilteredItems =>
-        string.IsNullOrWhiteSpace(searchQuery)
-            ? items
-            : items.Where(i => i.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                               i.Snippet.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                               i.Category.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-
-    private void AddResearchCard()
-    {
-        items.Insert(0, new ResearchItem
+        if (State.FinalResult != null)
         {
-            Title = $"Custom Research Track #{items.Count + 1}",
-            Category = "User R&D",
-            Snippet = "Dynamic research vector synthesized directly in client Blazor WASM state.",
-            Timestamp = "Just now",
-            Status = "In Progress"
-        });
+            try
+            {
+                var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+                var json = System.Text.Json.JsonSerializer.Serialize(State.FinalResult, opts);
+                await JS.InvokeVoidAsync("zlaInterop.saveIndexedDbResult", State.ActiveTopic, json);
+            }
+            catch { }
+        }
     }
 
-    private void RemoveItem(ResearchItem item)
+    private async Task GeneratePdfReport()
     {
-        items.Remove(item);
+        if (State.FinalResult == null) return;
+        var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+        var json = System.Text.Json.JsonSerializer.Serialize(State.FinalResult, opts);
+        await JS.InvokeVoidAsync("zlaInterop.generateExecutivePdf", json);
+    }
+
+    private async Task ExportMarkdown()
+    {
+        if (State.FinalResult == null) return;
+        var md = $"# InspectaLlama AI Report: {State.FinalResult.Query}\n\n" +
+                 $"**Timestamp:** {State.FinalResult.Timestamp}\n\n" +
+                 $"## Dialectical Edge Synthesis\n\n{State.FinalResult.Synthesis}\n\n" +
+                 $"## Inspected Sources\n\n";
+        foreach (var s in State.FinalResult.Sources)
+        {
+            md += $"- [{s.Title}]({s.Url}) - {s.Snippet}\n";
+        }
+
+        var fileName = $"inspectallama_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
+        await JS.InvokeVoidAsync("zlaInterop.downloadFile", fileName, md, "text/markdown;charset=utf-8");
     }
 }

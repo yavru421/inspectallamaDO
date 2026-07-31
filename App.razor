@@ -1,12 +1,46 @@
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(Layout.MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        <Router AppAssembly="@typeof(App).Assembly">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <PageTitle>Not found</PageTitle>
+                <LayoutView Layout="@typeof(Layout.MainLayout)">
+                    <div class="glass-card" style="margin: 3rem auto; max-width: 500px; text-align: center; padding: 2.5rem;">
+                        <h2 style="color: var(--accent-rose); margin-bottom: 0.5rem;">404 - Page Not Found</h2>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">The requested research pipeline route does not exist.</p>
+                        <a href="" class="btn-primary-custom" style="text-decoration: none; display: inline-block;">Return to Command Center (Step 1)</a>
+                    </div>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </ChildContent>
+    <ErrorContent Context="ex">
+        <div class="app-layout" style="align-items: center; justify-content: center; padding: 2rem;">
+            <div class="glass-card" style="max-width: 600px; width: 100%; border-color: rgba(244, 63, 94, 0.4); background: rgba(13, 19, 34, 0.95); text-align: center; padding: 2.5rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.75rem;">🛡️</div>
+                <h2 style="color: var(--accent-rose); font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">Pipeline Exception Intercepted</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.6;">
+                    An unhandled runtime error occurred within the Blazor WASM engine. The pipeline error boundary isolated the failure to prevent crash cascading.
+                </p>
+                <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent-rose); text-align: left; margin-bottom: 1.5rem; max-height: 140px; overflow-y: auto; white-space: pre-wrap;">
+                    @ex.Message
+                </div>
+                <button class="btn-primary-custom" @onclick="RecoverFromError">
+                    🔄 Reset State & Recover Pipeline
+                </button>
+            </div>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? errorBoundary;
+
+    private void RecoverFromError()
+    {
+        errorBoundary?.Recover();
+    }
+}

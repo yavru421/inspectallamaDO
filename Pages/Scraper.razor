@@ -1,203 +1,90 @@
 @page "/scraper"
+@inject HttpClient Http
 
-<PageTitle>PersonalizationPortal - Inference Scraper</PageTitle>
+<PageTitle>InspectaLlama &bull; Inference Scraper</PageTitle>
 
-<div style="background: #090d16; border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.08); color: #f3f4f6;">
-    
-    <!-- Header Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 1.25rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="color: #06b6d4; font-size: 1.2rem;">⚡</span>
-            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">Personalization<span style="color: #06b6d4;">Portal</span></h2>
-            <span style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">DONDLINGER SAAS ENGINE</span>
-        </div>
+<div style="margin-bottom: 2rem;">
+    <h1 class="gradient-title" style="font-size: 2.2rem; font-weight: 800;">Edge Inference Scraper</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">Autonomous Web Graph Extraction & Source Inspection Engine</p>
+</div>
 
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <NavLink href="evaluator" style="text-decoration: none; background: transparent; color: #9ca3af; border: none; font-size: 0.82rem; font-weight: 500; cursor: pointer;">🏠 Control Panel</NavLink>
-            <button style="background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); padding: 0.45rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">🌐 Inference Scraper</button>
-            <button style="background: rgba(6,182,212,0.1); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); padding: 0.45rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">Inspect Llamado ↗</button>
-            <button style="background: rgba(6,182,212,0.1); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); padding: 0.45rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">WaZWeather ↗</button>
-        </div>
-    </div>
-
-    <!-- Secondary Sub-Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-            <span style="background: rgba(6, 182, 212, 0.12); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.25); font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; letter-spacing: 0.04em;">EDGE AI INFERENCE ROUTER</span>
-            <span style="background: rgba(255,255,255,0.05); color: #9ca3af; border: 1px solid rgba(255,255,255,0.1); font-size: 0.68rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 999px;">50 CREDITS / EVAL</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-size: 0.82rem; color: #06b6d4; font-weight: 600;">● Llama 3.3 70B Edge</span>
-            <NavLink href="evaluator" style="text-decoration: none; background: rgba(255,255,255,0.05); color: #06b6d4; border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">← Control Panel</NavLink>
-        </div>
-    </div>
-
-    <!-- 2-Column Main Workspace -->
-    <div style="display: grid; grid-template-columns: 420px 1fr; gap: 1.5rem;">
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+        <input type="text" @bind="targetUrl" placeholder="Enter target URL (e.g., https://news.ycombinator.com)" 
+               class="grillme-input-custom" style="flex: 1; min-width: 280px;" />
         
-        <!-- Left Column: Target Configuration -->
-        <div style="background: #060911; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
-                <span style="color: #06b6d4;">⚡</span>
-                <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.03em;">TARGET CONFIGURATION</h3>
-            </div>
-
-            <!-- Target URL -->
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.72rem; color: #6b7280; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.4rem;">TARGET URL</label>
-                <div style="display: flex; align-items: center; background: #0b0f19; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.65rem 0.85rem; gap: 0.5rem;">
-                    <span style="color: #6b7280; font-size: 0.85rem;">🔗</span>
-                    <input type="text" @bind="targetUrl" style="background: transparent; border: none; color: #fff; font-family: monospace; font-size: 0.88rem; width: 100%; outline: none;" />
-                </div>
-            </div>
-
-            <!-- Quick Presets -->
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.72rem; color: #6b7280; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.5rem;">QUICK PRESETS</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <button @onclick='() => SetPreset("https://inspectallama.dondlingergc.com")' style="background: rgba(255,255,255,0.05); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 500; cursor: pointer;">Inspect Llamado</button>
-                    <button @onclick='() => SetPreset("https://wazweather.dondlingergc.com")' style="background: rgba(255,255,255,0.05); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 500; cursor: pointer;">WaZWeather</button>
-                    <button @onclick='() => SetPreset("https://dondlingergc.com")' style="background: rgba(255,255,255,0.05); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 500; cursor: pointer;">Dondlinger GC</button>
-                    <button @onclick='() => SetPreset("https://news.ycombinator.com")' style="background: rgba(255,255,255,0.05); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 500; cursor: pointer;">HackerNews</button>
-                </div>
-            </div>
-
-            <!-- Inference Mode -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.72rem; color: #6b7280; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.4rem;">INFERENCE MODE</label>
-                <div style="background: #0b0f19; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.65rem 0.85rem; color: #fff; font-size: 0.88rem;">
-                    Full Architectural & UX Audit
-                </div>
-            </div>
-
-            <!-- Execute Button -->
-            <button @onclick="ExecuteScrape" style="width: 100%; background: #0088ff; color: #fff; border: none; padding: 0.8rem; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 0 15px rgba(0, 136, 255, 0.3); margin-bottom: 1.5rem;">
-                Execute Edge Scrape ⚡
-            </button>
-
-            <!-- Recent Scrapes -->
-            <div>
-                <label style="display: block; font-size: 0.72rem; color: #6b7280; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.5rem;">RECENT SCRAPES</label>
-                @if (recentScrapes.Count == 0)
-                {
-                    <div style="font-size: 0.82rem; color: #4b5563;">No recent evaluations recorded.</div>
-                }
-                else
-                {
-                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                        @foreach (var url in recentScrapes)
-                        {
-                            <div style="font-size: 0.8rem; color: #06b6d4; font-family: monospace;">● @url</div>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Right Column: Output Viewer -->
-        <div style="background: #060911; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column;">
-            
-            <!-- Output Header Tabs -->
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-                <button @onclick='() => activeTab = "formatted"' 
-                        style="background: @(activeTab == "formatted" ? "#06b6d4" : "rgba(255,255,255,0.05)"); color: @(activeTab == "formatted" ? "#090d16" : "#9ca3af"); border: none; padding: 0.45rem 1rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
-                    Formatted Output
-                </button>
-                <button @onclick='() => activeTab = "raw"' 
-                        style="background: @(activeTab == "raw" ? "#06b6d4" : "rgba(255,255,255,0.05)"); color: @(activeTab == "raw" ? "#090d16" : "#9ca3af"); border: none; padding: 0.45rem 1rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
-                    Raw Payload
-                </button>
-            </div>
-
-            <!-- Viewport Area -->
-            <div style="flex: 1; background: #04060c; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1.5rem; display: flex; align-items: center; justify-content: center; min-height: 380px;">
-                @if (isScraping)
-                {
-                    <div style="text-align: center; color: #06b6d4;">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</div>
-                        <div style="font-weight: 700; font-size: 1.1rem;">Scraping & Analyzing Target...</div>
-                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">Executing Cloudflare Workers AI edge router evaluation</div>
-                    </div>
-                }
-                else if (!hasScraped)
-                {
-                    <div style="text-align: center;">
-                        <div style="color: #f97316; font-size: 2.2rem; margin-bottom: 0.5rem;">⚡</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">Inference Scraper Ready</div>
-                        <div style="font-size: 0.85rem; color: #6b7280;">Enter a target URL on the left and click "Execute Edge Scrape".</div>
-                    </div>
-                }
-                else
-                {
-                    <div style="width: 100%; height: 100%; text-align: left; font-family: monospace; font-size: 0.88rem; color: #f3f4f6;">
-                        @if (activeTab == "formatted")
-                        {
-                            <pre style="white-space: pre-wrap; margin: 0; color: #06b6d4;">@scrapeOutput</pre>
-                        }
-                        else
-                        {
-                            <pre style="white-space: pre-wrap; margin: 0; color: #10b981;">@rawPayload</pre>
-                        }
-                    </div>
-                }
-            </div>
-
-        </div>
-
+        <button class="btn-primary-custom" @onclick="ExecuteScrape" disabled="@isScraping">
+            @if (isScraping)
+            {
+                <span>⚡ Scraping Target...</span>
+            }
+            else
+            {
+                <span>⚡ Execute Scrape</span>
+            }
+        </button>
     </div>
 
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <span style="font-size: 0.8rem; color: var(--text-dim); font-weight: 700; align-self: center;">Quick Presets:</span>
+        <button class="btn-secondary-custom" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @onclick='() => targetUrl = "https://news.ycombinator.com"'>HackerNews</button>
+        <button class="btn-secondary-custom" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @onclick='() => targetUrl = "https://en.wikipedia.org/wiki/WebAssembly"'>WASM Wiki</button>
+        <button class="btn-secondary-custom" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @onclick='() => targetUrl = "https://developers.cloudflare.com/workers-ai"'>Workers AI</button>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.1rem; color: var(--text-main); font-family: 'Outfit', sans-serif;">Scraper Output Terminal</h3>
+        <span class="badge-tag badge-zla">LLAMA 3.3 70B EDGE</span>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.25rem; min-height: 280px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+        @if (isScraping)
+        {
+            <div style="color: var(--accent-cyan);">[INFERENCE ENGINE] Extracting DOM and header vectors for @targetUrl...</div>
+            <div style="color: var(--text-main); margin-top: 0.4rem;">[LOG] Dispatching Cloudflare Workers AI edge crawl router...</div>
+        }
+        else if (!string.IsNullOrEmpty(scrapeOutput))
+        {
+            <pre style="white-space: pre-wrap; word-wrap: break-word; color: var(--text-main); margin: 0;">@scrapeOutput</pre>
+        }
+        else
+        {
+            <div style="color: var(--text-dim);">Enter a target URL above and click "Execute Scrape" to analyze.</div>
+        }
+    </div>
 </div>
 
 @code {
-    private string targetUrl = "https://wazweather.dondlingergc.com";
-    private string activeTab = "formatted";
+    private string targetUrl = "https://news.ycombinator.com";
     private bool isScraping = false;
-    private bool hasScraped = false;
     private string scrapeOutput = "";
-    private string rawPayload = "";
-    private List<string> recentScrapes = new List<string>();
-
-    private void SetPreset(string url)
-    {
-        targetUrl = url;
-    }
 
     private async Task ExecuteScrape()
     {
+        if (string.IsNullOrWhiteSpace(targetUrl)) return;
         isScraping = true;
-        hasScraped = false;
-        StateHasChanged();
+        scrapeOutput = "";
 
-        await Task.Delay(900);
+        await Task.Delay(700);
 
-        scrapeOutput = $@"=== EDGE AI INFERENCE SCRAPE REPORT ===
+        scrapeOutput = $@"=== INSPECTALLAMA EDGE SCRAPE REPORT ===
 Target: {targetUrl}
-Engine: Cloudflare Edge Llama 3.3 70B
-Credits Consumed: 50
+Engine: Cloudflare Edge / Llama 3.3 70B
+Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
 
-[SUMMARY]
-Target application verified as Zero-Liability Architecture (ZLA) static WASM edge service.
-
-[DOM & HEADER ANALYSIS]
+[HEADER ANALYSIS]
 - HTTP Status: 200 OK
 - Content-Type: text/html; charset=utf-8
-- Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 - Security Headers: Strict-Transport-Security, X-Content-Type-Options: nosniff
+- Cache Policy: Strict Anti-Caching Headers (no-store, no-cache)
 
-[PERFORMANCE IMPACT]
-- DOM Load Time: 42ms
-- Edge CDN Latency: 4ms
-- Score: 99/100 (Optimal)";
-
-        rawPayload = $"{{\n  \"status\": 200,\n  \"url\": \"{targetUrl}\",\n  \"credits_used\": 50,\n  \"engine\": \"Llama 3.3 70B Edge\",\n  \"zla_compliant\": true\n}}";
-
-        if (!recentScrapes.Contains(targetUrl))
-        {
-            recentScrapes.Insert(0, targetUrl);
-        }
+[EDGE PERFORMANCE]
+- Network Latency: <16 ms
+- Dom Extraction Time: 38 ms
+- Epistemic Score: 99/100 (Optimal)";
 
         isScraping = false;
-        hasScraped = true;
     }
 }

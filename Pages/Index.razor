@@ -36,27 +36,27 @@
             
             @if (showPaymentAlert)
             {
-                <div class="w-full p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🎉</span>
-                        <span class="font-bold">Welcome to Inspecta Pro! Your account has been upgraded.</span>
+                <div class="glass-card" style="width: 100%; padding: 1rem 1.25rem; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald); font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">🎉</span>
+                        <span style="font-weight: 700;">Welcome to Inspecta Pro! Your account has been upgraded.</span>
                     </div>
-                    <button @onclick="() => showPaymentAlert = false" class="text-emerald-400 font-bold">&times;</button>
+                    <button @onclick="() => showPaymentAlert = false" style="background: none; border: none; color: var(--accent-emerald); font-weight: 800; cursor: pointer; font-size: 1.2rem;">&times;</button>
                 </div>
             }
 
             @if (rateLimitHit)
             {
-                <div class="w-full p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-between flex-wrap gap-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">⏳</span>
+                <div class="glass-card" style="width: 100%; padding: 1rem 1.25rem; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12); color: var(--accent-amber); font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">⏳</span>
                         <div>
-                            <span class="font-bold">Daily free search quota reached.</span>
-                            <span class="text-amber-400/80 ml-2">Resets in @TimeUntilMidnightUtc.</span>
+                            <span style="font-weight: 700;">Daily free search quota reached.</span>
+                            <span style="color: rgba(245, 158, 11, 0.8); margin-left: 0.5rem;">Resets in @TimeUntilMidnightUtc.</span>
                         </div>
                     </div>
                     <a href="https://personalization.dondlingergc.com/subscription" target="_blank" 
-                       class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition inline-flex items-center gap-1">
+                       class="btn-primary-custom" style="padding: 0.4rem 0.9rem; font-size: 0.78rem;">
                         Upgrade Pro →
                     </a>
                 </div>
@@ -64,24 +64,24 @@
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="w-full p-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">⚠️</span>
+                <div class="glass-card" style="width: 100%; padding: 1rem 1.25rem; border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.12); color: var(--accent-rose); font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">⚠️</span>
                         <div>
-                            <span class="font-bold">Search Execution Notice:</span>
-                            <span class="ml-2">@errorMessage</span>
+                            <span style="font-weight: 700;">Search Execution Notice:</span>
+                            <span style="margin-left: 0.5rem;">@errorMessage</span>
                         </div>
                     </div>
-                    <button @onclick="() => errorMessage = null" class="text-red-400 font-bold">&times;</button>
+                    <button @onclick="() => errorMessage = null" style="background: none; border: none; color: var(--accent-rose); font-weight: 800; cursor: pointer; font-size: 1.2rem;">&times;</button>
                 </div>
             }
 
-            <div class="flex items-center gap-3">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <div class="do-power-badge" title="Stateless edge AI routing powered by Cloudflare Workers AI">
                     <span class="do-bolt">⚡</span>
                     <span class="do-label">POWERED BY <strong class="do-highlight">CLOUDFLARE WORKERS AI</strong></span>
                 </div>
-                <span class="text-xs font-mono text-indigo-400/80">&bull; Llama 3.3 70B Edge Router</span>
+                <span style="font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; color: var(--accent-indigo);">&bull; Llama 3.3 70B Edge Router</span>
             </div>
             
             <h1 style="font-family: 'Outfit', sans-serif; font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 900; color: #fff; letter-spacing: -0.03em; line-height: 1.1;">
@@ -146,32 +146,31 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-dim);">
                     <span>Try Presets:</span>
-                    <button @onclick='() => RunPreset("Cloudflare Workers AI Llama 3.3 70B Edge Router")' class="text-slate-400 hover:text-indigo-400 underline transition">Workers AI Edge</button> &bull;
-                    <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' class="text-slate-400 hover:text-indigo-400 underline transition">ZLA Architecture</button>
+                    <button @onclick='() => RunPreset("Cloudflare Workers AI Llama 3.3 70B Edge Router")' style="background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer;">Workers AI Edge</button> &bull;
+                    <button @onclick='() => RunPreset("Zero-Liability Architecture (ZLA) vs Traditional SaaS Backend")' style="background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer;">ZLA Architecture</button>
                 </div>
             }
             else
             {
-                <div class="w-full bg-slate-900 border border-cyan-500/30 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 text-left">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="glass-card" style="width: 100%; border-color: var(--border-cyan); border-radius: var(--radius-lg); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; text-align: left;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.6rem;">
                         <div>
-                            <span class="text-xs text-cyan-400 font-mono uppercase tracking-wide">Stateless Edge Scraper</span>
-                            <h3 class="text-lg font-bold text-white">Inspect Webpage URL Architecture</h3>
+                            <span style="font-size: 0.75rem; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;">Stateless Edge Scraper</span>
+                            <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Inspect Webpage URL Architecture</h3>
                         </div>
-                        <span class="text-xs text-slate-500 font-mono">Llama 3.3</span>
+                        <span style="font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">Llama 3.3</span>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-center gap-2 mt-1">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <input @bind="evalTargetUrl" placeholder="https://example.com"
-                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+                               style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.6rem 1rem; color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; outline: none;" />
                         <button @onclick="RunUrlEvaluation" disabled="@isEvaluating"
-                                class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shrink-0 disabled:opacity-50">
+                                class="btn-primary-custom" style="padding: 0.6rem 1.25rem; font-size: 0.88rem; white-space: nowrap;">
                             @if (isEvaluating)
                             {
-                                <span class="animate-spin text-sm">🔄</span>
-                                <span>Auditing...</span>
+                                <span>🔄 Auditing...</span>
                             }
                             else
                             {
@@ -182,19 +181,19 @@
 
                     @if (!string.IsNullOrEmpty(evalError))
                     {
-                        <div class="text-xs font-mono text-red-400 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl">
+                        <div style="font-size: 0.78rem; font-family: 'JetBrains Mono', monospace; color: var(--accent-rose); background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.25); padding: 0.65rem; border-radius: var(--radius-sm);">
                             @evalError
                         </div>
                     }
 
-                    <div class="mt-2 bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-xs font-mono text-cyan-200/90 whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed shadow-inner">
+                    <div style="background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-main); white-space: pre-wrap; max-height: 280px; overflow-y: auto;">
                         @(string.IsNullOrEmpty(evalResult) ? "Enter a target web URL above and click 'Run Scraper ⚡' to execute an automated architectural audit." : evalResult)
                     </div>
                 </div>
             }
             
-            <div class="mt-4 animate-pulse text-slate-400 flex flex-col items-center gap-1">
-                <span class="text-xs font-bold uppercase tracking-wider">Scroll down or tap floating dock below to explore screens ↓</span>
+            <div style="margin-top: 1rem; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Scroll down or tap floating dock below to explore screens ↓</span>
             </div>
         </div>
     </section>
@@ -471,7 +470,6 @@
     private bool isLoading = false;
     private bool showPaymentAlert = false;
     private bool rateLimitHit = false;
-    private string activeTab = "synthesis";
     private string? errorMessage = null;
     private SearchResultResponse? result = null;
     private UserStatus? userStatus = null;
@@ -527,11 +525,7 @@
         if (uri.Query.Contains("payment=success"))
             showPaymentAlert = true;
 
-        try
-        {
-            await JS.InvokeAsync<string>("zlaInterop.checkPersonalizationSession");
-        }
-        catch { }
+        // Initialization complete
 
         await RefreshUserStatus();
     }
@@ -592,75 +586,25 @@
         }
     }
 
-    private async Task RunPreset(string query)
+    private void RunPreset(string query)
     {
         searchQuery = query;
-        await PerformSearch();
+        PerformSearch();
     }
 
-    private async Task HandleKeyUp(KeyboardEventArgs e)
+    private void HandleKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !isLoading && !rateLimitHit)
-            await PerformSearch();
+            PerformSearch();
     }
 
-    private async Task PerformSearch()
+    @inject ResearchStateService PipelineState
+
+    private void PerformSearch()
     {
         if (string.IsNullOrWhiteSpace(searchQuery) || rateLimitHit) return;
-
-        isLoading = true;
-        errorMessage = null;
-
-        // Build immediate Pre-Search Grill Me deck to interview the user FIRST
-        var initialGrillNodes = new List<InteractiveGrillNode>
-        {
-            new InteractiveGrillNode
-            {
-                StepIndex = 1,
-                Title = "1. Research Angle & Scope",
-                ContextQuestion = $"Which primary perspective should the AI prioritize for '{searchQuery}'?",
-                Options = new List<GrillOption>
-                {
-                    new GrillOption { Text = "(Recommended) Architecture & Deep Technical Trade-offs", IsRecommended = true, Rationale = "Focuses on benchmarks, distributed state, and hardware/runtime limits." },
-                    new GrillOption { Text = "Production Reliability & Security Audit", IsRecommended = false, Rationale = "Focuses on failure modes, zero-liability architecture, and edge safety." },
-                    new GrillOption { Text = "Solo Founder SaaS & Deployment Speed", IsRecommended = false, Rationale = "Focuses on zero-server cost, high leverage, and rapid iteration." }
-                }
-            },
-            new InteractiveGrillNode
-            {
-                StepIndex = 2,
-                Title = "2. Target Infrastructure Stack",
-                ContextQuestion = "Which infrastructure paradigm best aligns with your target environment?",
-                Options = new List<GrillOption>
-                {
-                    new GrillOption { Text = "(Recommended) Cloudflare Edge (Workers, Durable Objects, D1)", IsRecommended = true, Rationale = "Global low-latency, zero cold-starts, and client-side WASM state." },
-                    new GrillOption { Text = "Traditional Cloud & Bare-Metal Database", IsRecommended = false, Rationale = "Focuses on Redis, Postgres, and self-hosted server instances." },
-                    new GrillOption { Text = "Zero-Liability Pure Client Application (ZLA)", IsRecommended = false, Rationale = "100% static client-side WASM with zero backend server overhead." }
-                }
-            },
-            new InteractiveGrillNode
-            {
-                StepIndex = 3,
-                Title = "3. Synthesis Depth & Artifacts",
-                ContextQuestion = "What deliverable format should be generated upon completion?",
-                Options = new List<GrillOption>
-                {
-                    new GrillOption { Text = "(Recommended) Full Executive Synthesis & Verified Claims Matrix", IsRecommended = true, Rationale = "Generates dialectical claim checks, confidence scores, and knowledge graph." },
-                    new GrillOption { Text = "Code Blueprints & Implementation Examples", IsRecommended = false, Rationale = "Focuses on production C#/TypeScript code snippets and config." }
-                }
-            }
-        };
-
-        result = new SearchResultResponse
-        {
-            Query = searchQuery,
-            Mode = selectedMode,
-            Timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            GrillNodes = initialGrillNodes
-        };
-
-        isLoading = false;
-        await ScrollToScreen("screen-grill");
+        PipelineState.StartNewPipeline(searchQuery);
+        NavManager.NavigateTo("grill");
     }
 
     private async Task SelectGrillOption(InteractiveGrillNode node, GrillOption opt)
@@ -711,7 +655,6 @@
             {
                 var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 result = await response.Content.ReadFromJsonAsync<SearchResultResponse>(jsonOpts);
-                activeTab = "synthesis";
                 await IncrementCreditTickerState(credits: 1, estimatedTokens: 800);
                 await RefreshUserStatus();
                 await ScrollToScreen("screen-synthesis");
@@ -746,9 +689,6 @@
         }
         catch { }
     }
-
-    private bool isSyncing = false;
-    private string syncStatusMessage = "";
 
     private async Task GeneratePdfReport()
     {

@@ -138,3 +138,24 @@ Whenever querying system history in DuckDB (mind.duckdb, agent_memory.duckdb, st
 2. **Prevent Database Lock Timeouts**: Asynchronous background Python tasks that query DuckDB hold file locks on DuckDB databases (`mind.duckdb`, `agent_memory.duckdb`) and prevent subsequent agent turns from reading or writing telemetry.
 3. **Immediate Error Visibility**: Running synchronous execution ensures any command failure, traceback, or stdout is immediately captured in context without leaving orphaned background tasks (`task-XX`) running indefinitely.
 </RULE[AGENTS.md]>
+
+
+<RULE[AGENTS.md]>
+**InspectaLlama Flowing Multipage Pipeline Invariant:**
+1. **Vanilla CSS Glassmorphism**: ALL styling MUST use custom Vanilla CSS (wwwroot/css/app.css) with rich HSL CSS tokens, glassmorphism (ackdrop-filter: blur()), and dynamic micro-animations. NEVER import or generate Tailwind CSS.
+2. **Multipage Architecture**: Maintain distinct Blazor WASM pages (Index.razor, Research.razor, Evaluator.razor, Scraper.razor, Telemetry.razor, Settings.razor).
+3. **Interactive Grill-Me Pipeline**: The Research engine MUST implement a step-by-step interactive 'Grill-Me' interview pipeline (via Cloudflare Workers AI edge router / OrchestratorDO), asking clarifying questions with recommended options before producing final synthesized research artifacts.
+</RULE[AGENTS.md]>
+
+
+<RULE[AGENTS.md]>
+**Subdomain Architectural Boundaries Invariant:**
+Each platform under dondlingergc.com has a strict, decoupled domain boundary. NEVER cross-contaminate UI elements, headers, or features across subdomains:
+1. **inspectallamado.dondlingergc.com (InspectaLlama)**:
+   - **Scope**: Autonomous AI Deep Research Engine, Web Graph Traversal, Dialectical Claim Verification, and Interactive Grill-Me Research Pipeline.
+   - **Prohibited**: Hosting billing portals, account management, weather telemetry, or foreign app UI bars.
+2. **personalization.dondlingergc.com (Personalization Portal)**:
+   - **Scope**: User Identity Auth, Stripe Subscriptions, Credit Ledger, Account Settings, and User Vaults.
+3. **wazweather.dondlingergc.com (WaZWeather)**:
+   - **Scope**: Mobile-first live weather forecasting, moving radar animations, swipe-card weather telemetry, and stream hydrology data.
+</RULE[AGENTS.md]>

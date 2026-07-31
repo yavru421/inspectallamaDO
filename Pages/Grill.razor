@@ -1,0 +1,209 @@
+@page "/grill"
+@inject HttpClient Http
+@inject ResearchStateService State
+@inject NavigationManager Nav
+
+<PageTitle>InspectaLlama &bull; Grill-Me Interrogation (Step 2)</PageTitle>
+
+<div style="margin-bottom: 1.5rem;">
+    <span class="badge-tag badge-zla" style="margin-bottom: 0.5rem;">PIPELINE STEP 2 OF 5</span>
+    <h1 class="gradient-title" style="font-size: 2rem; font-weight: 800;">Grill-Me Interview Pipeline</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">Clarifying technical scope, constraints, and decision branches for: <strong style="color: var(--accent-cyan);">@State.ActiveTopic</strong></p>
+</div>
+
+@if (isLoading)
+{
+    <div class="glass-card" style="text-align: center; padding: 3rem;">
+        <h3 style="color: var(--accent-indigo); margin-bottom: 0.5rem;">⚡ Edge Router Synthesizing Decision Tree...</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Building interactive Grill-Me interrogation nodes for "@State.ActiveTopic"</p>
+    </div>
+}
+else if (questions.Count > 0)
+{
+    <div class="grillme-wizard" style="margin-bottom: 2rem;">
+        <div class="grillme-step-header">
+            <div>
+                <span class="badge-tag badge-zla" style="margin-bottom: 0.4rem;">QUESTION @(currentStepIndex + 1) OF @questions.Count</span>
+                <h2 class="grillme-question-title">@CurrentQuestion.Title</h2>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-size: 0.8rem; color: var(--accent-indigo); font-weight: 700;">Topic: @State.ActiveTopic</span>
+            </div>
+        </div>
+
+        <p style="font-size: 1.05rem; color: var(--text-main); line-height: 1.5;">
+            @CurrentQuestion.ContextQuestion
+        </p>
+
+        <div class="grillme-options-grid">
+            @foreach (var opt in CurrentQuestion.Options)
+            {
+                var isSelected = SelectedChoiceForCurrentStep == opt.Text;
+                <div class="grillme-option-pill @(isSelected ? "selected" : "") @(opt.IsRecommended ? "recommended" : "")"
+                     @onclick="() => SelectOption(opt.Text)">
+                    <div class="grillme-option-text">@opt.Text</div>
+                    <div class="grillme-option-desc">@opt.Rationale</div>
+                </div>
+            }
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <button class="btn-secondary-custom" @onclick="PrevStep" disabled="@(currentStepIndex == 0)">
+                &larr; Previous Question
+            </button>
+
+            <div class="grillme-progress-bar" style="width: 200px;">
+                <div class="grillme-progress-fill" style="width: @(ProgressPercentage)%"></div>
+            </div>
+
+            @if (currentStepIndex < questions.Count - 1)
+            {
+                <button class="btn-primary-custom" @onclick="NextStep">
+                    Next Question &rarr;
+                </button>
+            }
+            else
+            {
+                <button class="btn-primary-custom" @onclick="ProceedToEvaluator">
+                    Proceed to Vector Audit (Step 3) &rarr;
+                </button>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="glass-card" style="text-align: center; padding: 2.5rem;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">No active topic found in pipeline state.</p>
+        <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("")'>Start New Prompt at Step 1</button>
+    </div>
+}
+
+@code {
+    private bool isLoading = false;
+    private int currentStepIndex = 0;
+    private List<InteractiveGrillNode> questions = new();
+
+    private InteractiveGrillNode CurrentQuestion => questions[currentStepIndex];
+    private string SelectedChoiceForCurrentStep => State.SelectedAnswers.ContainsKey(currentStepIndex) ? State.SelectedAnswers[currentStepIndex] : "";
+    private int ProgressPercentage => questions.Count == 0 ? 0 : (int)(((currentStepIndex + 1) / (double)questions.Count) * 100);
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.CurrentStageIndex = 2;
+        if (string.IsNullOrWhiteSpace(State.ActiveTopic))
+        {
+            State.ActiveTopic = "Zero-Liability Architecture Blazor Edge Patterns";
+        }
+
+        if (State.GrillQuestions.Count > 0)
+        {
+            questions = State.GrillQuestions;
+        }
+        else
+        {
+            await FetchGrillQuestions();
+        }
+    }
+
+    private async Task FetchGrillQuestions()
+    {
+        isLoading = true;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("/api/grillme", new { topic = State.ActiveTopic });
+            if (res.IsSuccessStatusCode)
+            {
+                var payload = await res.Content.ReadFromJsonAsync<GrillMeResponsePayload>();
+                if (payload != null && payload.Questions != null && payload.Questions.Count > 0)
+                {
+                    questions = payload.Questions.Select(q => new InteractiveGrillNode {
+                        StepIndex = q.StepIndex,
+                        Title = q.Title,
+                        ContextQuestion = q.ContextQuestion,
+                        Options = q.Options.Select(o => new GrillOption { Text = o.Text, IsRecommended = o.IsRecommended, Rationale = o.Rationale }).ToList()
+                    }).ToList();
+                    State.SetGrillQuestions(questions);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            questions = GetFallbackQuestions();
+            State.SetGrillQuestions(questions);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectOption(string text)
+    {
+        State.SetAnswer(currentStepIndex, text);
+    }
+
+    private void NextStep()
+    {
+        if (currentStepIndex < questions.Count - 1) currentStepIndex++;
+    }
+
+    private void PrevStep()
+    {
+        if (currentStepIndex > 0) currentStepIndex--;
+    }
+
+    private void ProceedToEvaluator()
+    {
+        Nav.NavigateTo("evaluator");
+    }
+
+    private List<InteractiveGrillNode> GetFallbackQuestions()
+    {
+        var topic = string.IsNullOrWhiteSpace(State.ActiveTopic) ? "AI System Architecture" : State.ActiveTopic;
+        return new List<InteractiveGrillNode>
+        {
+            new InteractiveGrillNode {
+                StepIndex = 0,
+                Title = "Research Depth & Graph Traversal",
+                ContextQuestion = $"What scope of cognitive graph analysis should be conducted for \"{topic}\"?",
+                Options = new List<GrillOption> {
+                    new GrillOption { Text = "(Recommended) Bare-Metal Edge Sweep", IsRecommended = true, Rationale = "Multi-hop web graph extraction with epistemic confidence scoring." },
+                    new GrillOption { Text = "Targeted Claim Audit", IsRecommended = false, Rationale = "Fast extraction focused on high-priority dialectical claims." }
+                }
+            },
+            new InteractiveGrillNode {
+                StepIndex = 1,
+                Title = "Architecture & State Strategy",
+                ContextQuestion = $"Which architectural paradigm governs the implementation of \"{topic}\"?",
+                Options = new List<GrillOption> {
+                    new GrillOption { Text = "(Recommended) Zero-Liability Architecture (ZLA)", IsRecommended = true, Rationale = "100% client-side WASM execution with zero server liability." },
+                    new GrillOption { Text = "Cloudflare Durable Objects", IsRecommended = false, Rationale = "Real-time edge state persistence and WebSocket dispatch." }
+                }
+            },
+            new InteractiveGrillNode {
+                StepIndex = 2,
+                Title = "Epistemic Verification Threshold",
+                ContextQuestion = "What confidence threshold is required for claim verification?",
+                Options = new List<GrillOption> {
+                    new GrillOption { Text = "(Recommended) High Rigor (95%+ Confidence)", IsRecommended = true, Rationale = "Strict cross-source verification with verbatim quote extraction." },
+                    new GrillOption { Text = "Exploratory Synthesis (80%+ Confidence)", IsRecommended = false, Rationale = "Broad exploratory analysis across emergent source material." }
+                }
+            }
+        };
+    }
+
+    public class GrillMeResponsePayload
+    {
+        public bool Success { get; set; }
+        public List<QuestionItem> Questions { get; set; } = new();
+    }
+
+    public class QuestionItem
+    {
+        public int StepIndex { get; set; }
+        public string Title { get; set; } = "";
+        public string ContextQuestion { get; set; } = "";
+        public List<GrillOption> Options { get; set; } = new();
+    }
+}

@@ -405,6 +405,115 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
       }
     }
 
+    // 6. Interactive Grill-Me Interview Pipeline Endpoint
+    if (url.pathname === '/api/grillme' && request.method === 'POST') {
+      try {
+        const { topic } = await request.json() as { topic: string };
+        const grillPrompt = `TOPIC: "${topic}"
+INSTRUCTIONS: You are the InspectaLlama Grill-Me Edge Dispatcher. Generate an interactive 3-step decision interview pipeline to clarify the scope, architecture, depth, and target vectors for this research task.
+For each step, provide:
+- stepIndex (1, 2, or 3)
+- title (short header)
+- contextQuestion (clear question asking the user for their preference)
+- options: Array of 2-3 options. Exactly ONE option must be marked with isRecommended: true and have a clear rationale.
+
+Output ONLY valid JSON matching this schema:
+{
+  "questions": [
+    {
+      "stepIndex": 1,
+      "title": "Scope & Depth",
+      "contextQuestion": "What depth of research vector sweep should be executed for ${topic}?",
+      "options": [
+        {"text": "(Recommended) Deep Bare-Metal Edge Sweep", "isRecommended": true, "rationale": "Sweeps all D1, DuckDB memory, and live web search APIs simultaneously."},
+        {"text": "Fast Edge Synthesis", "isRecommended": false, "rationale": "High-velocity summary without deep crawl."}
+      ]
+    },
+    {
+      "stepIndex": 2,
+      "title": "Architectural Alignment",
+      "contextQuestion": "Which implementation paradigm should be prioritized?",
+      "options": [
+        {"text": "(Recommended) Zero-Liability Architecture (ZLA)", "isRecommended": true, "rationale": "100% client-side WASM execution with zero server bill."},
+        {"text": "Cloudflare Worker Edge Middleware", "isRecommended": false, "rationale": "Stateless edge routing with Worker AI inference."}
+      ]
+    },
+    {
+      "stepIndex": 3,
+      "title": "Output Artifact Format",
+      "contextQuestion": "How should the research findings be presented?",
+      "options": [
+        {"text": "(Recommended) Publication-Grade Markdown & Verified Claims", "isRecommended": true, "rationale": "Full dialectical breakdown, epistemic confidence scores, and source links."},
+        {"text": "Executive Summary & Action Plan", "isRecommended": false, "rationale": "Concise high-level takeaways."}
+      ]
+    }
+  ]
+}`;
+
+        let aiRes: any = null;
+        try {
+          aiRes = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+            messages: [
+              { role: 'system', content: 'Output strictly valid JSON with no markdown wrapping.' },
+              { role: 'user', content: grillPrompt }
+            ]
+          });
+        } catch (_) {
+          aiRes = { response: '' };
+        }
+
+        let questions: any[] = [];
+        try {
+          let str = aiRes.response || '';
+          const firstBrace = str.indexOf('{');
+          const lastBrace = str.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            str = str.substring(firstBrace, lastBrace + 1);
+            const parsed = JSON.parse(str);
+            if (Array.isArray(parsed.questions)) questions = parsed.questions;
+          }
+        } catch (_) {}
+
+        if (questions.length === 0) {
+          questions = [
+            {
+              stepIndex: 1,
+              title: "Research Depth",
+              contextQuestion: `What scope of analysis would you like for "${topic}"?`,
+              options: [
+                { text: "(Recommended) Exhaustive Deep-Reasoning Vector Sweep", isRecommended: true, rationale: "Analyzes primary sources, verified claims, and technical architecture." },
+                { text: "Fast Edge Synthesis", isRecommended: false, rationale: "Rapid overview focusing on high-level takeaways." }
+              ]
+            },
+            {
+              stepIndex: 2,
+              title: "Technical Stack Preference",
+              contextQuestion: "Which architectural constraint applies to this task?",
+              options: [
+                { text: "(Recommended) Zero-Liability Architecture (ZLA)", isRecommended: true, rationale: "Pure client-side WASM execution, zero maintenance liability." },
+                { text: "Cloudflare Edge / Durable Objects", isRecommended: false, rationale: "Distributed edge state with global replication." }
+              ]
+            },
+            {
+              stepIndex: 3,
+              title: "Verification Pipeline",
+              contextQuestion: "How should claims be audited?",
+              options: [
+                { text: "(Recommended) Dialectical Claim Audit", isRecommended: true, rationale: "Verifies facts against live web graphs and epistemological confidence scores." },
+                { text: "Standard Citation Extraction", isRecommended: false, rationale: "Extracts direct source URLs and verbatim quotes." }
+              ]
+            }
+          ];
+        }
+
+        return new Response(JSON.stringify({ success: true, topic, questions }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // Fallback to static asset serving with WASM immutable caching
     const response = env.ASSETS ? await env.ASSETS.fetch(request) : new Response('InspectaLlama Edge Router Active', { status: 200 });
     const newHeaders = new Headers(response.headers);
