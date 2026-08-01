@@ -1,4 +1,5 @@
 @page "/evaluator"
+@page "/evaluate"
 @inject HttpClient Http
 @inject ResearchStateService State
 @inject NavigationManager Nav
@@ -34,56 +35,26 @@
     </div>
 </div>
 
-<!-- Crawl Execution & Terminal Output -->
-<div class="glass-card" style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <span class="badge-tag badge-zla">EDGE SCRAPER RUNTIME</span>
-        <span style="font-size: 0.8rem; color: var(--accent-cyan);">Multi-Engine Vector Sweep</span>
-    </div>
+<!-- Auto-Synthesizing Cloudflare Workers AI Edge Inference Screen -->
+<div class="glass-card" style="margin-bottom: 2rem; text-align: center; padding: 3rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+    <h2 style="color: var(--accent-indigo); font-weight: 800; font-size: 1.5rem; margin-bottom: 0.5rem;">
+        Dispatching Edge Router (/utilize_the_edge)...
+    </h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 540px; margin: 0 auto 1.5rem; line-height: 1.6;">
+        Processing your selected Grill-Me decision matrix using Cloudflare Workers AI (Llama 3.3 70B)...
+    </p>
 
-    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.25rem; min-height: 200px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
-        @if (isCrawling)
-        {
-            <div style="color: var(--accent-cyan);">[SCRAPER] Traversing web graph for '@State.ActiveTopic'...</div>
-            <div style="color: var(--text-main); margin-top: 0.4rem;">[LOG] Querying DuckDuckGo + Wikipedia APIs...</div>
-            <div style="color: var(--accent-emerald); margin-top: 0.4rem;">[STATUS] Extracting verified claims and epistemic confidence scores...</div>
-        }
-        else if (sources.Count > 0)
-        {
-            <div style="color: var(--accent-emerald); margin-bottom: 0.75rem;">[SUCCESS] Extracted @sources.Count primary sources and claim nodes:</div>
-            @foreach (var s in sources)
-            {
-                <div style="margin-bottom: 0.4rem; color: var(--text-main);">
-                    • <strong style="color: var(--accent-indigo);">@s.Title</strong> (<a href="@s.Url" target="_blank" style="color: var(--accent-cyan);">@s.Url</a>)
-                </div>
-            }
-        }
-        else
-        {
-            <div style="color: var(--text-dim);">Ready to execute vector audit for target topic.</div>
-        }
-    </div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-        <button class="btn-secondary-custom" @onclick='() => Nav.NavigateTo("grill")'>
-            &larr; Back to Grill-Me (Step 2)
-        </button>
-
-        <button class="btn-primary-custom" @onclick="SynthesizeReport" disabled="@isCrawling">
-            @if (isCrawling)
-            {
-                <span>⚡ Crawling Edge Sources...</span>
-            }
-            else
-            {
-                <span>Proceed to Synthesized Report (Step 4) &rarr;</span>
-            }
-        </button>
+    <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent-cyan); text-align: left; max-width: 600px; margin: 0 auto 1.5rem;">
+        <div>[EDGE] Model: @cfModel</div>
+        <div>[GRILL-ME] Applying @State.SelectedAnswers.Count resolved decision branches...</div>
+        <div style="color: var(--accent-emerald); margin-top: 0.4rem;">[INFERENCE] Generating custom tailored specification & report...</div>
     </div>
 </div>
 
 @code {
     private bool isCrawling = false;
+    private string cfModel = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
     private List<SourceItem> sources = new();
 
     protected override async Task OnInitializedAsync()
@@ -93,7 +64,7 @@
         {
             State.ActiveTopic = "Zero-Liability Architecture Blazor Edge Patterns";
         }
-        await RunVectorCrawl();
+        await SynthesizeReport();
     }
 
     private async Task RunVectorCrawl()
