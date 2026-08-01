@@ -83,24 +83,24 @@ else
     <div class="glass-card" style="text-align: center; padding: 3rem;">
         <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">Research Synthesis Pending</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">No synthesis generated yet for topic: "@State.ActiveTopic"</p>
-        <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("evaluator")'>← Run Vector Audit at Step 3</button>
+        <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("grill")'>← Go to Grill-Me Interrogation (Step 2)</button>
     </div>
 }
 
 <div style="display: flex; justify-content: space-between; align-items: center;">
-    <button class="btn-secondary-custom" @onclick='() => Nav.NavigateTo("evaluator")'>
-        &larr; Back to Vector Audit (Step 3)
+    <button class="btn-secondary-custom" @onclick='() => Nav.NavigateTo("grill")'>
+        &larr; Back to Grill-Me Interview (Step 2)
     </button>
 
     <button class="btn-primary-custom" @onclick='() => Nav.NavigateTo("telemetry")'>
-        View Edge Telemetry (Step 5) &rarr;
+        View Edge Telemetry (Step 4) &rarr;
     </button>
 </div>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        State.CurrentStageIndex = 4;
+        State.CurrentStageIndex = 3;
         if (string.IsNullOrWhiteSpace(State.ActiveTopic))
         {
             State.ActiveTopic = "Zero-Liability Architecture Blazor Edge Patterns";

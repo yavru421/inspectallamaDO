@@ -65,7 +65,7 @@ else if (questions.Count > 0)
             else
             {
                 <button class="btn-primary-custom" @onclick="ProceedToEvaluator">
-                    Proceed to Vector Audit (Step 3) &rarr;
+                    Proceed to Executive Report (Step 3) &rarr;
                 </button>
             }
         </div>
@@ -159,97 +159,38 @@ else
     private void PrevStep()
     {
         if (currentStepIndex > 0) currentStepIndex--;
-    }
-
-    private void ProceedToEvaluator()
+    }    private void ProceedToEvaluator()
     {
-        Nav.NavigateTo("evaluator");
+        Nav.NavigateTo("research");
     }
 
     private List<InteractiveGrillNode> GetFallbackQuestions()
     {
-        var topic = string.IsNullOrWhiteSpace(State.ActiveTopic) ? "AI System Architecture" : State.ActiveTopic;
-        var isTech = System.Text.RegularExpressions.Regex.IsMatch(topic, @"code|software|api|wasm|zla|architecture|cloudflare|database|build|c#|python|js|react|blazor", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var topic = string.IsNullOrWhiteSpace(State.ActiveTopic) ? "Alternating Paddle Stairs" : State.ActiveTopic;
 
-        if (isTech)
+        return new List<InteractiveGrillNode>
         {
-            return new List<InteractiveGrillNode>
-            {
-                new InteractiveGrillNode {
-                    StepIndex = 0,
-                    Title = "Research Depth & Graph Traversal Scope",
-                    ContextQuestion = $"What scope of cognitive graph analysis should be conducted for \"{topic}\"?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) Bare-Metal Edge Sweep", IsRecommended = true, Rationale = "Multi-hop web graph extraction with epistemic confidence scoring." },
-                        new GrillOption { Text = "Targeted Dialectical Claim Audit", IsRecommended = false, Rationale = "Fast extraction focused strictly on high-priority dialectical claims." },
-                        new GrillOption { Text = "Exhaustive Web Graph Exploration", IsRecommended = false, Rationale = "Deep 4-hop link expansion across technical documentation & research papers." },
-                        new GrillOption { Text = "Strict Fact-Checking Mode", IsRecommended = false, Rationale = "High-precision verification filtering out non-factual marketing content." }
-                    }
-                },
-                new InteractiveGrillNode {
-                    StepIndex = 1,
-                    Title = "Architecture & State Runtime Strategy",
-                    ContextQuestion = $"Which architectural paradigm governs the implementation of \"{topic}\"?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) Zero-Liability Architecture (ZLA)", IsRecommended = true, Rationale = "100% client-side WASM execution with zero server liability." },
-                        new GrillOption { Text = "Cloudflare Durable Objects & WebSockets", IsRecommended = false, Rationale = "Real-time edge state persistence and live WebSocket broadcast." },
-                        new GrillOption { Text = "Hybrid Edge Workers Router", IsRecommended = false, Rationale = "Stateless edge function routing with D1 database caching." },
-                        new GrillOption { Text = "Pure WASM Client Isolation", IsRecommended = false, Rationale = "Strict offline-capable client state without edge workers API calls." }
-                    }
-                },
-                new InteractiveGrillNode {
-                    StepIndex = 2,
-                    Title = "Epistemic Verification & Confidence Threshold",
-                    ContextQuestion = "What confidence threshold is required for claim verification?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) High Rigor (95%+ Confidence)", IsRecommended = true, Rationale = "Strict cross-source verification with verbatim quote extraction." },
-                        new GrillOption { Text = "Exploratory Synthesis (80%+ Confidence)", IsRecommended = false, Rationale = "Broad exploratory analysis across emergent source material." },
-                        new GrillOption { Text = "Paranoid Audit (99%+ Absolute Rigor)", IsRecommended = false, Rationale = "Rejects any unverified source without 2+ primary domain citations." },
-                        new GrillOption { Text = "Rapid Consensus Sweep (70%+ Threshold)", IsRecommended = false, Rationale = "Fast synthesis prioritizing speed over verbatim quote extraction." }
-                    }
+            new InteractiveGrillNode {
+                StepIndex = 0,
+                Title = $"Primary Design & Scope for {topic}",
+                ContextQuestion = $"What primary dimension of \"{topic}\" would you like to resolve?",
+                Options = new List<GrillOption> {
+                    new GrillOption { Text = "(Recommended) Comprehensive Engineering & Tread Breakdown", IsRecommended = true, Rationale = $"Covers physical dimensions, tread alternating geometry, and steep incline safety for {topic}." },
+                    new GrillOption { Text = "Building Code & OSHA Compliance Standard", IsRecommended = false, Rationale = $"Focuses strictly on legal incline limits, handrail height, and regulatory compliance." },
+                    new GrillOption { Text = "Space Optimization & Material Selection", IsRecommended = false, Rationale = $"Focuses on compact footprint, timber vs steel fabrication, and non-slip treads." }
                 }
-            };
-        }
-        else
-        {
-            return new List<InteractiveGrillNode>
-            {
-                new InteractiveGrillNode {
-                    StepIndex = 0,
-                    Title = "Research Focus & Historical Scope",
-                    ContextQuestion = $"Which primary perspective or era should be examined for \"{topic}\"?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) Comprehensive Historical & Fact-Checked Overview", IsRecommended = true, Rationale = "Examines official public records, key milestones, and verified timeline." },
-                        new GrillOption { Text = "Recent News & Contemporary Developments", IsRecommended = false, Rationale = "Focuses strictly on recent events and emerging news coverage." },
-                        new GrillOption { Text = "Dialectical Viewpoints & Critical Debates", IsRecommended = false, Rationale = "Audits opposing perspectives and contested claims for objective balance." },
-                        new GrillOption { Text = "Key Quotes & Verbatim Statements", IsRecommended = false, Rationale = "Prioritizes primary source quotes and direct public statements." }
-                    }
-                },
-                new InteractiveGrillNode {
-                    StepIndex = 1,
-                    Title = "Epistemic Rigor & Source Selection",
-                    ContextQuestion = $"What verification standard should govern the audit for \"{topic}\"?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) High Rigor (95%+ Epistemic Confidence)", IsRecommended = true, Rationale = "Cross-references multiple independent primary sources and encyclopedia archives." },
-                        new GrillOption { Text = "Broad Exploratory Media Survey", IsRecommended = false, Rationale = "Captures emerging media coverage and public discourse." },
-                        new GrillOption { Text = "Strict Primary Source Verification", IsRecommended = false, Rationale = "Filters out commentary, requiring official documents or direct quotes." },
-                        new GrillOption { Text = "Rapid Fact Consensus Sweep", IsRecommended = false, Rationale = "Fast consensus summary of established facts." }
-                    }
-                },
-                new InteractiveGrillNode {
-                    StepIndex = 2,
-                    Title = "Synthesis & Output Format",
-                    ContextQuestion = "How should the research findings be structured?",
-                    Options = new List<GrillOption> {
-                        new GrillOption { Text = "(Recommended) Verified Claims Matrix & Source Audits", IsRecommended = true, Rationale = "Dialectical report with claim confidence badges and verbatim quotes." },
-                        new GrillOption { Text = "Chronological Timeline & Key Milestones", IsRecommended = false, Rationale = "Sequential breakdown of historical events." },
-                        new GrillOption { Text = "Executive Briefing & Key Takeaways", IsRecommended = false, Rationale = "High-level summary for fast reading." },
-                        new GrillOption { Text = "Deep Analytical Monograph", IsRecommended = false, Rationale = "In-depth investigation with full contextual analysis." }
-                    }
+            },
+            new InteractiveGrillNode {
+                StepIndex = 1,
+                Title = "Constraint & Incline Analysis",
+                ContextQuestion = $"What is the primary constraint governing your setup for \"{topic}\"?",
+                Options = new List<GrillOption> {
+                    new GrillOption { Text = "(Recommended) Compact Footprint & Steep Rise Optimization", IsRecommended = true, Rationale = "Prioritizes maximum vertical rise in minimum horizontal run." },
+                    new GrillOption { Text = "Cost & Modular Prefabrication", IsRecommended = false, Rationale = "Optimizes for off-the-shelf kit assembly and material cost." }
                 }
-            };
-        }
-    }
+            }
+        };
+    } }
 
     public class GrillMeResponsePayload
     {

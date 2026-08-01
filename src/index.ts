@@ -409,28 +409,34 @@ Output JSON strictly matching: {"forks": ["Fork 1...", "Fork 2...", "Fork 3...",
     if (url.pathname === '/api/grillme' && request.method === 'POST') {
       try {
         const { topic } = await request.json() as { topic: string };
-        const grillPrompt = `TOPIC: "${topic}"
-INSTRUCTIONS: You are the InspectaLlama Grill-Me Edge Dispatcher. Generate an interactive 3-step decision interview pipeline to clarify the scope, analytical perspective, depth, and output format for this specific research topic.
-CRITICAL INVARIANT: Adapt your questions to the exact domain of the topic! If the topic is a person/biography/politics/history/science/news, DO NOT ask about software architecture, ZLA, or databases. Ask questions relevant to that specific subject matter (e.g. historical era, political career, scientific rigor, perspective lens, focus areas).
+        const grillPrompt = `USER TOPIC: "${topic}"
 
-For each of the 3 steps, generate:
-- stepIndex (1, 2, or 3)
-- title (short domain-appropriate header)
-- contextQuestion (clear question asking the user for their research preference regarding "${topic}")
-- options: Array of 4 distinct options tailored specifically to "${topic}". Exactly ONE option must be marked with isRecommended: true and have a clear rationale.
+INSTRUCTIONS:
+You are the InspectaLlama Grill-Me Edge Dispatcher. Generate an interactive 3-step decision interview pipeline to clarify the scope, domain specifics, and constraints for "${topic}".
 
-Output ONLY valid JSON matching this schema:
+CRITICAL RULE:
+Your questions and options MUST BE 100% SPECIFIC TO "${topic}".
+- DO NOT ask about software, Cloudflare, databases, ZLA, or code unless "${topic}" is explicitly a software/coding topic!
+- If "${topic}" is physical stairs, ask about building codes, tread geometry, space constraints, and safety railings.
+- If "${topic}" is history, ask about eras, primary sources, and political impact.
+- If "${topic}" is medical/health, ask about clinical guidelines, symptoms, and treatments.
+
+For each of the 3 steps, output:
+- stepIndex: 1, 2, or 3
+- title: Short domain-appropriate header
+- contextQuestion: Clear question asking the user for their preference regarding "${topic}"
+- options: Array of 3-4 distinct options tailored specifically to "${topic}". Exactly ONE option must have isRecommended: true and a clear rationale explaining why.
+
+Output ONLY valid JSON matching this exact structure:
 {
   "questions": [
     {
       "stepIndex": 1,
-      "title": "Domain Focus & Scope",
-      "contextQuestion": "What specific angle or era should be prioritized for research on ${topic}?",
+      "title": "Specific Title For ${topic}",
+      "contextQuestion": "Specific question about ${topic}?",
       "options": [
-        {"text": "(Recommended) Comprehensive Historical & Fact-Checked Overview", "isRecommended": true, "rationale": "Sweeps official records, key milestones, and verified timeline."},
-        {"text": "Recent Developments & Current Context", "isRecommended": false, "rationale": "Focuses strictly on recent events and emerging coverage."},
-        {"text": "Key Controversies & Dialectical Perspectives", "isRecommended": false, "rationale": "Audits opposing viewpoints and claims for objective evaluation."},
-        {"text": "Primary Document & Quote Analysis", "isRecommended": false, "rationale": "Prioritizes verbatim transcripts and primary source records."}
+        {"text": "(Recommended) Tailored Option 1", "isRecommended": true, "rationale": "Why optimal for ${topic}."},
+        {"text": "Tailored Option 2", "isRecommended": false, "rationale": "Alternative aspect."}
       ]
     }
   ]
@@ -451,6 +457,7 @@ Output ONLY valid JSON matching this schema:
         let questions: any[] = [];
         try {
           let str = aiRes.response || '';
+          if (typeof str === 'object') str = JSON.stringify(str);
           const firstBrace = str.indexOf('{');
           const lastBrace = str.lastIndexOf('}');
           if (firstBrace !== -1 && lastBrace !== -1) {
@@ -461,81 +468,46 @@ Output ONLY valid JSON matching this schema:
         } catch (_) {}
 
         if (questions.length === 0) {
-          const isTech = /code|software|api|wasm|zla|architecture|cloudflare|database|build|c#/i.test(topic);
-          if (isTech) {
-            questions = [
-              {
-                stepIndex: 1,
-                title: "Technical Architecture Scope",
-                contextQuestion: `What scope of engineering analysis should be conducted for "${topic}"?`,
-                options: [
-                  { text: "(Recommended) Zero-Liability Architecture (ZLA)", isRecommended: true, rationale: "100% client-side WASM execution with zero server liability." },
-                  { text: "Cloudflare Durable Objects & WebSockets", isRecommended: false, rationale: "Real-time edge state persistence and live WebSocket broadcast." },
-                  { text: "Stateless Edge Worker Routing", isRecommended: false, rationale: "High-performance edge routing with D1 database caching." },
-                  { text: "Pure Offline WASM Isolation", isRecommended: false, rationale: "Client-side execution without external network calls." }
-                ]
-              },
-              {
-                stepIndex: 2,
-                title: "Code & Benchmark Rigor",
-                contextQuestion: "Which technical evaluation metric should be prioritized?",
-                options: [
-                  { text: "(Recommended) High Rigor (95%+ Confidence)", isRecommended: true, rationale: "Verifies technical specs against official documentation & benchmark logs." },
-                  { text: "Exploratory Architecture Audit", isRecommended: false, rationale: "Broad survey of competing framework implementations." },
-                  { text: "Security & Vulnerability Audit", isRecommended: false, rationale: "Analyzes attack vectors and data isolation boundaries." },
-                  { text: "Performance & Cold-Start Benchmark", isRecommended: false, rationale: "Focuses on execution latency and resource memory usage." }
-                ]
-              },
-              {
-                stepIndex: 3,
-                title: "Output Spec Format",
-                contextQuestion: "How should the technical findings be formatted?",
-                options: [
-                  { text: "(Recommended) Publication-Grade Markdown & Code Samples", isRecommended: true, rationale: "Full architectural breakdown with runnable code blocks." },
-                  { text: "Executive Architecture Briefing", isRecommended: false, rationale: "High-level summary for engineering leadership." },
-                  { text: "Step-by-Step Migration Blueprint", isRecommended: false, rationale: "Actionable refactoring roadmap." },
-                  { text: "Interactive Decision Tree", isRecommended: false, rationale: "Categorized tradeoff matrix." }
-                ]
-              }
-            ];
-          } else {
-            questions = [
-              {
-                stepIndex: 1,
-                title: "Research Focus & Scope",
-                contextQuestion: `Which primary perspective or era should be examined for "${topic}"?`,
-                options: [
-                  { text: "(Recommended) Comprehensive Historical & Fact-Checked Overview", isRecommended: true, rationale: "Examines official records, key milestones, and verified timeline." },
-                  { text: "Recent News & Contemporary Developments", isRecommended: false, rationale: "Focuses strictly on recent events and emerging coverage." },
-                  { text: "Dialectical Viewpoints & Critical Debates", isRecommended: false, rationale: "Audits opposing perspectives and contested claims for objective balance." },
-                  { text: "Key Quotes & Verbatim Statements", isRecommended: false, rationale: "Prioritizes primary source quotes and direct public statements." }
-                ]
-              },
-              {
-                stepIndex: 2,
-                title: "Epistemic Rigor & Source Selection",
-                contextQuestion: "What verification standard should govern the source audit?",
-                options: [
-                  { text: "(Recommended) High Rigor (95%+ Epistemic Confidence)", isRecommended: true, rationale: "Cross-references multiple independent primary sources and encyclopedia archives." },
-                  { text: "Broad Exploratory Survey", isRecommended: false, rationale: "Captures emerging media coverage and public discourse." },
-                  { text: "Strict Primary Source Verification", isRecommended: false, rationale: "Filters out commentary, requiring official documents or direct quotes." },
-                  { text: "Rapid Fact Sweep", isRecommended: false, rationale: "Fast consensus summary of established facts." }
-                ]
-              },
-              {
-                stepIndex: 3,
-                title: "Report Structure",
-                contextQuestion: "How should the research report be structured?",
-                options: [
-                  { text: "(Recommended) Verified Claims Matrix & Source Audits", isRecommended: true, rationale: "Dialectical report with claim confidence badges and verbatim quotes." },
-                  { text: "Chronological Timeline & Key Milestones", isRecommended: false, rationale: "Sequential breakdown of historical events." },
-                  { text: "Executive Summary & Key Takeaways", isRecommended: false, rationale: "High-level briefing for fast reading." },
-                  { text: "Deep Analytical Monograph", isRecommended: false, rationale: "In-depth investigation with full context." }
-                ]
-              }
-            ];
-          }
+          questions = [
+            {
+              stepIndex: 1,
+              title: `Primary Scope & Focus for ${topic}`,
+              contextQuestion: `What specific dimension of "${topic}" do you want to analyze?`,
+              options: [
+                { text: `(Recommended) Comprehensive Technical & Practical Breakdown`, isRecommended: true, rationale: `Covers physical specs, regulations, and real-world application.` },
+                { text: `Regulatory & Compliance Standards`, isRecommended: false, rationale: `Focuses on official building codes and safety requirements.` },
+                { text: `Design & Ergonomic Optimization`, isRecommended: false, rationale: `Focuses on space-saving geometry, materials, and usability.` }
+              ]
+            },
+            {
+              stepIndex: 2,
+              title: `Constraint & Requirements Audit`,
+              contextQuestion: `What primary constraint applies to your setup for "${topic}"?`,
+              options: [
+                { text: `(Recommended) Tight Space & Steep Incline Constraints`, isRecommended: true, rationale: `Optimizes for minimum footprint and maximum vertical rise.` },
+                { text: `Budget & Material Cost Optimization`, isRecommended: false, rationale: `Focuses on cost-effective prefabricated or modular components.` },
+                { text: `High Safety & Accessibility Standards`, isRecommended: false, rationale: `Prioritizes handrails, non-slip treads, and user safety.` }
+              ]
+            },
+            {
+              stepIndex: 3,
+              title: `Deliverable Output Format`,
+              contextQuestion: `How should the generated solution for "${topic}" be presented?`,
+              options: [
+                { text: `(Recommended) Detailed Engineering Specification & Diagrams`, isRecommended: true, rationale: `Provides full dimensional specs and step-by-step guidance.` },
+                { text: `Executive Summary & Code Compliance Checklist`, isRecommended: false, rationale: `Quick inspection reference for compliance.` }
+              ]
+            }
+          ];
         }
+
+        return new Response(JSON.stringify({ success: true, topic, questions }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
 
         return new Response(JSON.stringify({ success: true, topic, questions }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
