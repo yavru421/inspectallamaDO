@@ -509,14 +509,6 @@ Output ONLY valid JSON matching this exact structure:
       }
     }
 
-        return new Response(JSON.stringify({ success: true, topic, questions }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
-
     // Fallback to static asset serving with WASM immutable caching
     const response = env.ASSETS ? await env.ASSETS.fetch(request) : new Response('InspectaLlama Edge Router Active', { status: 200 });
     const newHeaders = new Headers(response.headers);
